@@ -16,7 +16,10 @@ func TestRoutingTable(t *testing.T) {
 	rt.AddContact(NewContact(NewKademliaID("2111111400000000000000000000000000000000"), "localhost:8002"))
 
 	contacts := rt.FindClosestContacts(NewKademliaID("2111111400000000000000000000000000000000"), 20)
+	contacts := rt.FindClosestContacts(NewKademliaID("2111111400000000000000000000000000000001"), 20)
 	for i := range contacts {
 		fmt.Println(contacts[i].String())
 	}
+
+	fmt.Println("hej");
 }
