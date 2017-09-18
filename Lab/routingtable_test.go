@@ -58,7 +58,7 @@ func TestRoutingTable_1002(t *testing.T) {
 		}
 }
 
-/* Test case 1003: AddContact should add a contact to the routing table if that ID is not already taken, regardless of port used.*/
+/* Test case 1003: AddContact should add a contact to the routing table only if that ID is not already taken, regardless of port used.*/
 func TestRoutingTable_1003(t *testing.T) {
 	srcNode := "FFFFFFFF00000000000000000000000000000000";
 	node1 := "1111111100000000000000000000000000000000";
