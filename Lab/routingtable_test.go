@@ -37,7 +37,7 @@ func TestRoutingTable_1001(t *testing.T) {
 
 }
 
-/* Test case 1002: FindClosestContact should return k items if k is higher than the amount of items available. */
+/* Test case 1002: FindClosestContact should return k items even if k is higher than the amount of items available. */
 func TestRoutingTable_1002(t *testing.T) {
 
 	node1 := "1111111100000000000000000000000000000000";
@@ -92,4 +92,8 @@ func TestRoutingTable_1003(t *testing.T) {
 	}
 }
 
-rgswwgrggsg
+
+tobias asdfasdfasdfasdfasdf
+
+
+
