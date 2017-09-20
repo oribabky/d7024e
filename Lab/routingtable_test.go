@@ -2,6 +2,7 @@ package d7024e
 
 import (
 	"testing"
+	"fmt"
 )
 
 /* Test case 1001: FindClosestContacts should return k closest nodes ordered in distance to source node. */
@@ -50,7 +51,7 @@ func TestRoutingTable_1002(t *testing.T) {
 
 	k := 1000;
 	kClosest := rt.FindClosestContacts(NewKademliaID(node1), k)
-
+    fmt.Println(kClosest[0].Address)
 	expectedSize := 2;
 
 	if len(kClosest) != expectedSize {

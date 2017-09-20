@@ -1,0 +1,6 @@
+package d7024e
+
+message PingPacket {
+	required string message = 1;
+	optional int64 sent_time = 2;
+}
