@@ -17,7 +17,7 @@ func connect(senderAddr string, destinationAddr string) *net.UDPConn {
 	CheckError(err, "")
 
 	//if there is an error, close the connection
-	defer conn.Close()
+	//Adefer conn.Close()
 	return conn
 }
 
@@ -27,6 +27,6 @@ func listening(localAddr string) *net.UDPConn {
 
 	serverConn, err := net.ListenUDP("udp", serverAddr)
 	CheckError(err, "")
-	defer serverConn.Close()
+	//defer serverConn.Close()
 	return serverConn
 }

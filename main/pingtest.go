@@ -1,7 +1,10 @@
 package main
 
-import "../d7024e"
+import d "../d7024e"
 
 func main() {
-	d7024e.Listen("localhost", 4000)
+	srcNode := "FFFFFFFF00000000000000000000000000000000";
+	server := d.NewContact(d.NewKademliaID(srcNode), ":4000");
+	network := d.NewNetwork(&server)
+	network.Listen()
 }
