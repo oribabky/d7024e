@@ -4,6 +4,7 @@ import (
 	"log"
 	"github.com/golang/protobuf/proto"
 	//"fmt"
+	"net"
 	)
 
 type Network struct {
@@ -16,7 +17,14 @@ func NewNetwork(contact *Contact) Network {
 
 func (network *Network) Listen() {
 	buf := make([]byte, 1024)
-	serverConn := listening(network.contact.Address)
+
+	//establish a connection 
+	serverAddr, err := net.ResolveUDPAddr("udp", network.contact.Address)
+	CheckError(err, "")
+	serverConn, err := net.ListenUDP("udp", serverAddr)
+	CheckError(err, "")
+	defer serverConn.Close() //close the connection when something is return
+
 	log.Println(network.contact.Address)
 	for {
 		n, addr, err := serverConn.ReadFromUDP(buf)
@@ -33,9 +41,16 @@ func (network *Network) Listen() {
 
 func (network *Network) SendPingMessage(remote *Contact) {
 	//establish a connection to the remote server.
-	conn := connect(network.contact.Address, remote.Address)
+	remoteAddr, err := net.ResolveUDPAddr("udp", remote.Address)
+	CheckError(err, "")
+	localAddr, err := net.ResolveUDPAddr("udp", network.contact.Address)
+	CheckError(err, "")
+	conn, err := net.DialUDP("udp", localAddr, remoteAddr)
+	CheckError(err, "")
+	defer conn.Close() //if there is an error, close the connection
+	//conn := connect(network.contact.Address, remote.Address)
 
-	pingPacket := network.CreatePingPacket(network.contact.Address)
+	pingPacket := network.CreatePingPacket(network.contact.Address)  //here we can set the ping message
 
 	//now := time.Now().Unix()
 	//pingPacket.SentTime = now
