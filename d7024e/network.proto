@@ -2,6 +2,6 @@ syntax = "proto2";
 package d7024e;
 
 message PingPacket {
-	required string message = 1;
-	optional int64 sent_time = 2;
+	required string Message = 1;
+	optional int64 SentTime = 2;
 }
