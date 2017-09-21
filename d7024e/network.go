@@ -8,10 +8,25 @@ import (
 
 type Network struct {
 	contact *Contact
+	channel chan string
+}
+
+type RPC struct {
+
 }
 
 func NewNetwork(contact *Contact) Network {
 	return Network{contact}
+}
+
+func (network *Network) RequestHandler(rpc string) {
+	switch rpc {
+	case "ping":
+		channel <- rpc
+	case "store"
+		channel <- rpc
+	
+	}
 }
 
 func (network *Network) Listen() {
