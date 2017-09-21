@@ -6,7 +6,7 @@ import (
 	"net"
 )
 
-func connect(senderAddr string, destinationAddr string) {
+func connect(senderAddr string, destinationAddr string) *net.UDPConn {
 	remoteAddr, err := net.ResolveUDPAddr("udp", destinationAddr)
 	CheckError(err, "")
 
@@ -18,6 +18,7 @@ func connect(senderAddr string, destinationAddr string) {
 
 	//if there is an error, close the connection
 	defer conn.Close()
+	return conn
 }
 
 func listening(localAddr string) *net.UDPConn {

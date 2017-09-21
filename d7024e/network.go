@@ -18,6 +18,7 @@ func (network *Network) Listen(ip string, port int) {
 		pingPacket := &PingPacket{}
 		err = proto.Unmarshal(buf[0:n], pingPacket)
 		log.Printf("Recived %s at %s from %s", *pingPacket.Message, time.Unix(*pingPacket.SentTime, 0), addr)
+
 		CheckError(err, "Couldn't listen ")
 	}
 	
@@ -25,10 +26,12 @@ func (network *Network) Listen(ip string, port int) {
 
 func (network *Network) SendPingMessage(sender *Contact, remote *Contact) {
 	//establish a connection to the remote server.
-	connect(sender.Address, remote.Address)
+	conn := connect(sender.Address, remote.Address)
 
 	pingPacket := network.CreatePingPacket("Hello I'm alive")
-	pingPacket.SentTime = time.Now().Unix()
+
+	now := time.Now().Unix()
+	pingPacket.SentTime = &now
 
 	data, err := proto.Marshal(pingPacket)
 	CheckError(err, "Couldn't marshal the message")
@@ -41,7 +44,7 @@ func (network *Network) SendPingMessage(sender *Contact, remote *Contact) {
 
 func (network *Network) CreatePingPacket(msg string) *PingPacket {
 	pingPacket := PingPacket{
-		message: &msg,
+		Message: &msg,
 	}
 	return &pingPacket
 }
