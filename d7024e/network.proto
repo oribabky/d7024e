@@ -1,14 +1,7 @@
 syntax = "proto3";
 package d7024e;
 
-service Greeter {
-	rpc Pong (PingRequest) returns (PingReply);
-}
-message PingRequest {
-	string Address = 1;
-}
-
-message PingReply {
+message PingPacket {
 	string Message = 1;
 	int64 SentTime = 2;
 }

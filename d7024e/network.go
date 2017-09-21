@@ -14,10 +14,6 @@ func NewNetwork(contact *Contact) Network {
 	return Network{contact}
 }
 
-func (network *Network) Pong(p *PingRequest) *PingReply{
-	return &PingReply{Message: "Hello there " + p.Address}
-}
-
 func (network *Network) Listen() {
 	buf := make([]byte, 1024)
 	serverConn := listening(network.contact.Address)
@@ -39,12 +35,12 @@ func (network *Network) SendPingMessage(remote *Contact) {
 	//establish a connection to the remote server.
 	conn := connect(network.contact.Address, remote.Address)
 
-	pingRequest := network.CreatePingRequest(network.contact.Address)
+	pingPacket := network.CreatePingPacket(network.contact.Address)
 
 	//now := time.Now().Unix()
 	//pingPacket.SentTime = now
 
-	data, err := proto.Marshal(pingRequest)
+	data, err := proto.Marshal(pingPacket)
 	CheckError(err, "Couldn't marshal the message")
 
 	buf := []byte(data)
@@ -54,11 +50,11 @@ func (network *Network) SendPingMessage(remote *Contact) {
 
 }
 
-func (network *Network) CreatePingRequest(msg string) *PingRequest {
-	pingRequest := PingRequest{
+func (network *Network) CreatePingPacket(msg string) *PingPacket {
+	pingPacket := PingPacket{
 		Message: msg,
 	}
-	return &pingRequest
+	return &pingPacket
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact) {
