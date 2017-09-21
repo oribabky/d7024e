@@ -1,6 +1,6 @@
 package d7024e
 import (
-	"time"
+	//"time"
 	"log"
 	"github.com/golang/protobuf/proto"
 	//"fmt"
@@ -25,13 +25,13 @@ func (network *Network) Listen() {
 	CheckError(err, "")
 	defer serverConn.Close() //close the connection when something is return
 
-	log.Println(network.contact.Address)
+	//log.Println(network.contact.Address)
 	for {
 		n, addr, err := serverConn.ReadFromUDP(buf)
 		pingPacket := &PingPacket{}
 		err = proto.Unmarshal(buf[0:n], pingPacket)
 		if addr != nil {
-			log.Printf("Received %s at %s from %s", pingPacket.Message, time.Unix(pingPacket.SentTime, 0), addr)
+			log.Printf("Received ping from %s", pingPacket.Message) // must be changed !!!!!
 		}
 
 		CheckError(err, "Couldn't listen ")
