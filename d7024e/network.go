@@ -1,6 +1,10 @@
 package d7024e
 import (
+<<<<<<< HEAD
 //	"time"
+=======
+	//"time"
+>>>>>>> 52ed9d203e981c5e3c43e44f20aa2510441032c8
 	"log"
 	"github.com/golang/protobuf/proto"
 	//"fmt"
@@ -58,7 +62,6 @@ func (network *Network) Listen() {
 	CheckError(err, "")
 	defer serverConn.Close() //close the connection when something is return
 
-
 	for {
 		log.Println("listening...")
 		n, addr, err := serverConn.ReadFromUDP(buf)
@@ -78,11 +81,20 @@ func (network *Network) Listen() {
 }
 
 func (network *Network) SendKademliaPacket(targetNode *Contact, procedure string) {
-	//establish a connection to the remote server.
-	conn := connect(network.contact.Address, targetNode.Address)
+	
+	//establish a connection to the target server.
+
+	targetAddr, err := net.ResolveUDPAddr("udp", targetNode.Address)
+	CheckError(err, "")
+	localAddr, err := net.ResolveUDPAddr("udp", network.contact.Address)
+	CheckError(err, "")
+	conn, err := net.DialUDP("udp", localAddr, targetAddr)
+	CheckError(err, "")
+	defer conn.Close() //if there is an error, close the connection
 
 	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, procedure)
 	log.Println(kademliaPacket.SourceAddress)
+
 
 	data, err := proto.Marshal(kademliaPacket)
 	CheckError(err, "Couldn't marshal the message")
