@@ -1,18 +1,9 @@
 syntax = "proto3";
 package d7024e;
 
-service Serve {
-	rpc RequestHandler (PingPacket) returns (PingResponse);
+message KademliaPacket {
+	string SourceAddress = 1;
+	string Procedure = 2;
 }
 
-message PingPacket {
-	string Message = 1;
-	int64 SentTime = 2;
-}
-
-message PingResponse {
-	string Message = 1;
-	int64 SentTime = 2;
-}
-
-message StoreRequestasdasda
+//protoc --go_out=. *.proto

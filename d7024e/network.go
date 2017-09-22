@@ -1,44 +1,76 @@
 package d7024e
 import (
-	"time"
+//	"time"
 	"log"
 	"github.com/golang/protobuf/proto"
 	//"fmt"
+	"net"
 	)
+
+type RPC struct {
+	srcAddress string
+	procedure string
+}
 
 type Network struct {
 	contact *Contact
-	channel chan string
+	channel chan *RPC
 }
 
-type RPC struct {
+//protocol for how rpcs should be written as strings
+const PingReq string = "pingRequest"
+const PingResp string = "pingResponse"
 
+
+func NewRPC(srcAddress string, procedure string) RPC {
+	return RPC{srcAddress, procedure}
 }
 
 func NewNetwork(contact *Contact) Network {
-	return Network{contact}
+	return Network{contact, make(chan *RPC)}
 }
 
-func (network *Network) RequestHandler(rpc string) {
-	switch rpc {
-	case "ping":
-		channel <- rpc
-	case "store"
-		channel <- rpc
-	
+func (network *Network) RequestHandler() {
+	//Handles requests coming from the channel.
+	for {
+		log.Println("Requesthandler")
+		/*request := <-network.channel
+		v := <-ch */
+
 	}
+	/*switch rpc {
+	case PingReq:
+		channel <- rpc
+	case PingResp:
+		channel <- rpc
+	default:
+		log.Println("unknown RPC")
+	} */
 }
 
 func (network *Network) Listen() {
 	buf := make([]byte, 1024)
-	serverConn := listening(network.contact.Address)
-	log.Println(network.contact.Address)
+
+	//establish a connection 
+	serverAddr, err := net.ResolveUDPAddr("udp", network.contact.Address)
+	CheckError(err, "")
+	serverConn, err := net.ListenUDP("udp", serverAddr)
+	CheckError(err, "")
+	defer serverConn.Close() //close the connection when something is return
+
+
 	for {
+		log.Println("listening...")
 		n, addr, err := serverConn.ReadFromUDP(buf)
-		pingPacket := &PingPacket{}
-		err = proto.Unmarshal(buf[0:n], pingPacket)
+		CheckError(err, "Couldn't listen ")
+		kademliaPacket := &KademliaPacket{}
+		err = proto.Unmarshal(buf[0:n], kademliaPacket)
+		
 		if addr != nil {
-			log.Printf("Received %s at %s from %s", pingPacket.Message, time.Unix(pingPacket.SentTime, 0), addr)
+			rpcRequest := NewRPC(kademliaPacket.SourceAddress, kademliaPacket.Procedure)
+			network.channel <- &rpcRequest;
+			log.Printf("Received RPC-request: " + kademliaPacket.Procedure + " from " + kademliaPacket.SourceAddress)
+			//log.Printf("Received %s at %s from %s", pingPacket.Message, time.Unix(pingPacket.SentTime, 0), addr)
 		}
 
 		CheckError(err, "Couldn't listen ")
@@ -46,16 +78,16 @@ func (network *Network) Listen() {
 	
 }
 
-func (network *Network) SendPingMessage(remote *Contact) {
+func (network *Network) SendKademliaPacket(targetNode *Contact, procedure string) {
 	//establish a connection to the remote server.
-	conn := connect(network.contact.Address, remote.Address)
+	conn := connect(network.contact.Address, targetNode.Address)
 
-	pingPacket := network.CreatePingPacket(network.contact.Address)
-
+	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, procedure)
+	//CheckError(err, "bad kademlia procedure name.")
 	//now := time.Now().Unix()
 	//pingPacket.SentTime = now
 
-	data, err := proto.Marshal(pingPacket)
+	data, err := proto.Marshal(kademliaPacket)
 	CheckError(err, "Couldn't marshal the message")
 
 	buf := []byte(data)
@@ -65,11 +97,18 @@ func (network *Network) SendPingMessage(remote *Contact) {
 
 }
 
-func (network *Network) CreatePingPacket(msg string) *PingPacket {
-	pingPacket := PingPacket{
-		Message: msg,
+func (network *Network) CreateKademliaPacket(sourceAddress string, procedure string) *KademliaPacket {
+
+	//check that the procedure is one defined by the constants in this file.
+	if procedure != PingReq && procedure != PingResp {
+		log.Println("bad.." + PingReq + procedure)
 	}
-	return &pingPacket
+
+	kademliaPacket := KademliaPacket{
+		SourceAddress: sourceAddress,
+		Procedure: procedure,
+	}
+	return &kademliaPacket
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact) {
