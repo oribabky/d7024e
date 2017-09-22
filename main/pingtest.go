@@ -1,14 +1,16 @@
 package main
 
-import d "../d7024e"
+import (
+	d "../d7024e"
+	"log"
+	)
 
 func main() {
-	me := d.NewContact(d.NewKademliaID("FFFFFFFF00000000000000000000000000000000"), ":4000");
+	srcNode := "FFFFFFFF00000000000000000000000000000000";
+	server := d.NewContact(d.NewKademliaID(srcNode), ":4000");
+	network := d.NewNetwork(&server)
 
-	network := d.NewNetwork(&me)
-
-	network.Listen()
-	//network.RequestHandler()
-
-	//network.SendPingMessage(&target)
+	log.Println("Hello I am on address: " + server.Address)
+	go network.Listen()
+	network.RequestHandler()
 }

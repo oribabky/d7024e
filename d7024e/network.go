@@ -32,10 +32,23 @@ func NewNetwork(contact *Contact) Network {
 func (network *Network) RequestHandler() {
 	//Handles requests coming from the channel.
 	for {
-		log.Println("Requesthandler")
-		/*request := <-network.channel
-		v := <-ch */
 
+		requestProcedure := <-network.channel
+		log.Println("handling: " + requestProcedure.procedure + 
+			" from " + requestProcedure.srcAddress)
+
+		switch requestProcedure.procedure {
+		case PingReq:
+			//THIS MIGHT NEED TO BE CHANGED SO SENDKADEMLIAPACKET
+			//DOESNT NEED A CONTACT EACH TIME.
+			srcNode := "FFFFFFFF00000000000000000000000000000000";
+			target := NewContact(NewKademliaID(srcNode), requestProcedure.srcAddress);
+			network.SendKademliaPacket(&target, PingResp)
+
+		case PingResp:
+			log.Println("Pinged and received response from " + 
+				requestProcedure.srcAddress)
+		}
 	}
 	/*switch rpc {
 	case PingReq:
@@ -62,17 +75,19 @@ func (network *Network) Listen() {
 		n, addr, err := serverConn.ReadFromUDP(buf)
 		kademliaPacket := &KademliaPacket{}
 		err = proto.Unmarshal(buf[0:n], kademliaPacket)
-		
 		if addr != nil {
 			rpcRequest := NewRPC(kademliaPacket.SourceAddress, kademliaPacket.Procedure)
-			network.channel <- &rpcRequest;
+			go network.AddToChannel(&rpcRequest)
 			log.Printf("Received RPC-request: " + kademliaPacket.Procedure + " from " + kademliaPacket.SourceAddress)
-			//log.Printf("Received %s at %s from %s", pingPacket.Message, time.Unix(pingPacket.SentTime, 0), addr)
 		}
 
 		CheckError(err, "Couldn't listen ")
 	}
 	
+}
+
+func (network *Network) AddToChannel(rpc *RPC) {
+	network.channel <- rpc;
 }
 
 func (network *Network) SendKademliaPacket(targetNode *Contact, procedure string) {
@@ -88,7 +103,6 @@ func (network *Network) SendKademliaPacket(targetNode *Contact, procedure string
 	defer conn.Close() //if there is an error, close the connection
 
 	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, procedure)
-	log.Println(kademliaPacket.SourceAddress)
 
 
 	data, err := proto.Marshal(kademliaPacket)
