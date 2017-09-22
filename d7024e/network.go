@@ -1,10 +1,5 @@
 package d7024e
 import (
-<<<<<<< HEAD
-//	"time"
-=======
-	//"time"
->>>>>>> 52ed9d203e981c5e3c43e44f20aa2510441032c8
 	"log"
 	"github.com/golang/protobuf/proto"
 	//"fmt"
