@@ -119,7 +119,7 @@ func (network *Network) CreateKademliaPacket(sourceAddress string, procedure str
 
 	//check that the procedure is one defined by the constants in this file.
 	if procedure != PingReq && procedure != PingResp {
-		log.Println("bad procedure.." + procedure)
+		log.Println("bad procedure.." + procedure) //NEED ERROR HANDLING
 	}
 
 	kademliaPacket := KademliaPacket{
