@@ -62,7 +62,6 @@ func (network *Network) Listen() {
 	for {
 		log.Println("listening...")
 		n, addr, err := serverConn.ReadFromUDP(buf)
-		CheckError(err, "Couldn't listen ")
 		kademliaPacket := &KademliaPacket{}
 		err = proto.Unmarshal(buf[0:n], kademliaPacket)
 		
@@ -83,9 +82,7 @@ func (network *Network) SendKademliaPacket(targetNode *Contact, procedure string
 	conn := connect(network.contact.Address, targetNode.Address)
 
 	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, procedure)
-	//CheckError(err, "bad kademlia procedure name.")
-	//now := time.Now().Unix()
-	//pingPacket.SentTime = now
+	log.Println(kademliaPacket.SourceAddress)
 
 	data, err := proto.Marshal(kademliaPacket)
 	CheckError(err, "Couldn't marshal the message")
@@ -101,7 +98,7 @@ func (network *Network) CreateKademliaPacket(sourceAddress string, procedure str
 
 	//check that the procedure is one defined by the constants in this file.
 	if procedure != PingReq && procedure != PingResp {
-		log.Println("bad.." + PingReq + procedure)
+		log.Println("bad procedure.." + procedure)
 	}
 
 	kademliaPacket := KademliaPacket{
