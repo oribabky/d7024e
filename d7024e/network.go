@@ -129,7 +129,7 @@ func (network *Network) CreateKademliaPacket(sourceAddress string, procedure str
 	return &kademliaPacket
 }
 
-func (network *Network) SendFindContactMessage(contact *Contact) {
+func (network *Network) SendFindContactMessage(contact *Contact) { //Find_node
 	// TODO
 }
 
