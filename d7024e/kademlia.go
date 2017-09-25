@@ -1,7 +1,7 @@
 package d7024e
 
 import (
-	"fmt"
+//	"fmt"
 )
 
 type Kademlia struct {
@@ -9,18 +9,17 @@ type Kademlia struct {
 	rt *RoutingTable
 }
 
-func NewKademlia (me *Contact) *Kademlia {
-	rt := NewRoutingTable(me)
+func NewKademlia (me *Contact, rt *RoutingTable) Kademlia {
 	return Kademlia{rt}
 }
 
-const alpha = 3
-const intk = 20
+const Alpha int = 1;
+const intk int = 20;
 
 
 
 func (kademlia *Kademlia) LookupContact(target *Contact) {
-	contacts := kademlia.rt.FindClosestContacts(target.ID, intk)
+	//contacts := kademlia.rt.FindClosestContacts(target.ID, intk)
 
 
 }
