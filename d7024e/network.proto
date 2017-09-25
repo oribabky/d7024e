@@ -1,9 +1,16 @@
-syntax = "proto3";
+syntax = "proto2";
 package d7024e;
 
 message KademliaPacket {
-	string SourceAddress = 1;
-	string Procedure = 2;
+	required string SourceAddress = 1;
+	required string Procedure = 2;
+	repeated Contact Contacts = 3;
+}
+
+message Contact {
+	required string Address = 1;
+	required string Nodeid = 2;
+
 }
 
 //protoc --go_out=. *.proto
