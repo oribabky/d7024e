@@ -1,15 +1,28 @@
 package d7024e
 
+import (
+	"fmt"
+)
+
 type Kademlia struct {
+	//network Network
 	rt *RoutingTable
 }
 
-const alpha = 3;
+func NewKademlia (me *Contact) *Kademlia {
+	rt := NewRoutingTable(me)
+	return Kademlia{rt}
+}
 
-//func NewKademlia
+const alpha = 3
+const intk = 20
+
+
 
 func (kademlia *Kademlia) LookupContact(target *Contact) {
-	// TODO
+	contacts := kademlia.rt.FindClosestContacts(target.ID, intk)
+
+
 }
 
 func (kademlia *Kademlia) LookupData(hash string) {

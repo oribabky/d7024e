@@ -1,4 +1,4 @@
-syntax = "proto3";
+syntax = "proto2";
 package d7024e;
 
 message KademliaPacket {
@@ -12,5 +12,7 @@ message KademliaPacket {
 
 	repeated Contact Contacts = 3; 
 }
+
+
 
 //protoc --go_out=. *.proto

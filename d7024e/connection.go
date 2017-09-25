@@ -1,4 +1,4 @@
-package d7024e
+/*package d7024e
 
 import (
 	//"flag"
