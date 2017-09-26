@@ -15,7 +15,6 @@ type RPC struct {
 type Network struct {
 	contact *Contact
 	channel chan *RPC
-	kademlia *Kademlia
 }
 
 //protocol for how rpcs should be written as strings
@@ -28,47 +27,54 @@ func NewRPC(srcAddress string, procedure string, targetID string) RPC {
 	return RPC{srcAddress, procedure, targetID}
 }
 
-func NewNetwork(contact *Contact, kademlia *Kademlia) Network {
-	return Network{contact, make(chan *RPC), kademlia}
+func NewNetwork(contact *Contact) Network {
+	return Network{contact, make(chan *RPC)}
 }
 
-func (network *Network) RequestHandler() {
+func (network *Network) RequestHandler(rt *RoutingTable) {
 	//Handles requests coming from the channel.
 	for {
 
-		requestProcedure := <-network.channel
-		log.Println("handling: " + requestProcedure.procedure + 
-			" from " + requestProcedure.srcAddress)
+		rpc := <-network.channel
+		log.Println("handling: " + rpc.procedure + 
+			" from " + rpc.srcAddress)
 
-		switch requestProcedure.procedure {
+		switch rpc.procedure {
 		case PingReq:
-			//THIS MIGHT NEED TO BE CHANGED SO SENDKADEMLIAPACKET
+			/*//THIS MIGHT NEED TO BE CHANGED SO SENDKADEMLIAPACKET
 			//DOESNT NEED A CONTACT EACH TIME.
 			srcNode := "FFFFFFFF00000000000000000000000000000000";
-			target := NewContact(NewKademliaID(srcNode), requestProcedure.srcAddress);
+			target := NewContact(NewKademliaID(srcNode), rpc.srcAddress); */
 
 			kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingResp)
-			network.SendKademliaPacket(&target, kademliaPacket)
+			network.SendKademliaPacket(rpc.srcAddress, kademliaPacket)
 
 		case PingResp:
 			log.Println("Pinged and received response from " + 
-				requestProcedure.srcAddress)
+				rpc.srcAddress)
 
 		case FindNodeReq:
-			log.Println("hey")
-			targetID := NewKademliaID(requestProcedure.targetID)
-			alphaClosest := network.kademlia.rt.FindClosestContacts(targetID, Alpha)
-		
-			for i := range alphaClosest {
-				log.Println(alphaClosest[i].ID.String())
-			} 
+			targetID := NewKademliaID(rpc.targetID)
+			kClosest := rt.FindClosestContacts(targetID, K)
 
 			kademliaPacket := network.CreateKademliaPacket(network.contact.Address, FindNodeResp)
-			kademliaPacket.Contacts = alphaClosest
-			network.SendKademliaPacket(&target, &kademliaPacket)
+
+			for i := range kClosest {
+				log.Println(kClosest[i].ID.String())
+				contactPacket := ContactPacket {
+					Address: kClosest[i].Address,
+					ID: kClosest[i].ID.String(),
+				}
+				kademliaPacket.Contacts = append(kademliaPacket.Contacts, &contactPacket)
+			} 
+
+			network.SendKademliaPacket(rpc.srcAddress, kademliaPacket)
 
 
 		case FindNodeResp:
+			log.Println("Find_node response received from " + 
+				rpc.srcAddress)
+			//for i := range rpc.
 			//find k closest nodes to the target ID from my routing table.
 			
 		}
@@ -99,9 +105,9 @@ func (network *Network) Listen() {
 		kademliaPacket := &KademliaPacket{}
 		err = proto.Unmarshal(buf[0:n], kademliaPacket)
 		if addr != nil {
-			rpcRequest := NewRPC(*kademliaPacket.SourceAddress, *kademliaPacket.Procedure, *kademliaPacket.TargetID)
+			rpcRequest := NewRPC(kademliaPacket.SourceAddress, kademliaPacket.Procedure, kademliaPacket.TargetID)
 			go network.AddToChannel(&rpcRequest)
-			log.Printf("Received RPC-request: " + *kademliaPacket.Procedure + " from " + *kademliaPacket.SourceAddress)
+			log.Printf("Received RPC-request: " + kademliaPacket.Procedure + " from " + kademliaPacket.SourceAddress)
 		}
 
 		CheckError(err, "Couldn't listen ")
@@ -113,11 +119,11 @@ func (network *Network) AddToChannel(rpc *RPC) {
 	network.channel <- rpc;
 }
 
-func (network *Network) SendKademliaPacket(targetNode *Contact, packet *KademliaPacket) {
+func (network *Network) SendKademliaPacket(address string, packet *KademliaPacket) {
 	
 	//establish a connection to the target server.
 
-	targetAddr, err := net.ResolveUDPAddr("udp", targetNode.Address)
+	targetAddr, err := net.ResolveUDPAddr("udp", address)
 	CheckError(err, "")
 	localAddr, err := net.ResolveUDPAddr("udp", network.contact.Address)
 	CheckError(err, "")
@@ -125,13 +131,7 @@ func (network *Network) SendKademliaPacket(targetNode *Contact, packet *Kademlia
 	CheckError(err, "")
 	defer conn.Close() //if there is an error, close the connection
 
-	
-
-	if targetID != "" {
-		kademliaPacket.TargetID = &targetID;
-	}
-
-	data, err := proto.Marshal(kademliaPacket)
+	data, err := proto.Marshal(packet)
 	CheckError(err, "Couldn't marshal the message")
 
 	buf := []byte(data)
@@ -149,14 +149,21 @@ func (network *Network) CreateKademliaPacket(sourceAddress string, procedure str
 	}
 
 	kademliaPacket := KademliaPacket{
-		SourceAddress: &sourceAddress,
-		Procedure: &procedure,
+		SourceAddress: sourceAddress,
+		Procedure: procedure,
 	}
 	return &kademliaPacket
 }
 
-func (network *Network) SendFindContactMessage(contact *Contact, targetID string) {
-	network.SendKademliaPacket(contact, FindNodeReq, targetID)
+func (network *Network) SendPingMessage(address string) {
+	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingReq)
+	network.SendKademliaPacket(address, kademliaPacket)
+}
+
+func (network *Network) SendFindNodeMessage(address string, targetID string) {
+	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, FindNodeReq)
+	kademliaPacket.TargetID = targetID;
+	network.SendKademliaPacket(address, kademliaPacket)
 }
 
 func (network *Network) SendFindDataMessage(hash string) {

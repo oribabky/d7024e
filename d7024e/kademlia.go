@@ -13,8 +13,8 @@ func NewKademlia (me *Contact, rt *RoutingTable) Kademlia {
 	return Kademlia{rt}
 }
 
-const Alpha int = 1;
-const intk int = 20;
+const Alpha int = 2;
+const K int = 3;
 
 
 

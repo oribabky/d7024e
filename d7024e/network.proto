@@ -1,18 +1,16 @@
-syntax = "proto2";
+syntax = "proto3";
 package d7024e;
 
-message Contact {
-	optional string Address = 1;
-	optional string ID = 2;
+message ContactPacket {
+	string Address = 1;
+	string ID = 2;
 }
+
 message KademliaPacket {
-	required string SourceAddress = 1;
-	required string Procedure = 2;
-
-	optional string TargetID = 3;
-
-
-	repeated Contact Contacts = 4; 
+	string SourceAddress = 1;
+	string Procedure = 2;
+	string TargetID = 3;
+	repeated ContactPacket Contacts = 4; 
 }
 
 
