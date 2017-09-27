@@ -23,6 +23,7 @@ type Network struct {
 
 
 //protocol for how rpcs should be written as strings
+const PingSend string = "pingSend"
 const PingReq string = "pingRequest"
 const PingResp string = "pingResponse"
 const FindNodeReq string = "findNodeRequest"
@@ -58,6 +59,8 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			" from " + currentPacket.SourceAddress)
 
 		switch currentPacket.Procedure {
+
+
 		case PingReq:
 			kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingResp)
 			kademliaPacket.PacketID = currentPacket.PacketID;
@@ -68,6 +71,10 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			log.Println("Pinged and received response from " + 
 				currentPacket.SourceAddress)
 			network.MarkReturnedPacket(currentPacket)
+
+		case PingSend:
+			currentPacket.Procedure = PingReq
+			network.SendKademliaPacket(currentPacket.DestinationAddress, currentPacket)
 
 		case FindNodeReq:
 			targetID := NewKademliaID(currentPacket.TargetID)
@@ -111,13 +118,14 @@ func (network *Network) Listen() {
 	CheckError(err, "")
 	serverConn, err := net.ListenUDP("udp", serverAddr)
 	CheckError(err, "")
-	defer serverConn.Close() //close the connection when something is return
+	defer serverConn.Close() //close the connection when something is returned
 
 	for {
 		log.Println("listening...")
 		n, addr, err := serverConn.ReadFromUDP(buf)
 		kademliaPacket := &KademliaPacket{}
 		err = proto.Unmarshal(buf[0:n], kademliaPacket)
+		log.Println(kademliaPacket.Procedure)
 		if addr != nil {
 			//rpcRequest := NewRPC(kademliaPacket.SourceAddress, kademliaPacket.Procedure, kademliaPacket.TargetID)
 			go network.AddToChannel(kademliaPacket)
@@ -134,7 +142,7 @@ func (network *Network) AddToChannel(packet *KademliaPacket) {
 }
 
 func (network *Network) SendKademliaPacket(address string, packet *KademliaPacket) {
-	
+	network.mux.Lock()
 	//establish a connection to the target server.
 
 	targetAddr, err := net.ResolveUDPAddr("udp", address)
@@ -152,13 +160,14 @@ func (network *Network) SendKademliaPacket(address string, packet *KademliaPacke
 
 	_, err = conn.Write(buf)
 	CheckError(err, "Couldn't write the message")
+	network.mux.Unlock()
 
 }
 
 func (network *Network) CreateKademliaPacket(sourceAddress string, procedure string) *KademliaPacket {
 
 	//check that the procedure is one defined by the constants in this file.
-	if procedure != PingReq && procedure != PingResp && procedure != FindNodeReq && procedure != FindNodeResp {
+	if procedure != PingReq && procedure != PingResp && procedure != FindNodeReq && procedure != FindNodeResp && procedure != PingSend {
 		log.Println("bad procedure.." + procedure) //NEED ERROR HANDLING
 	}
 
@@ -166,10 +175,9 @@ func (network *Network) CreateKademliaPacket(sourceAddress string, procedure str
 		SourceAddress: sourceAddress,
 		Procedure: procedure,
 	}
-
-
 	return &kademliaPacket
 }
+
 func (network *Network) MarkReturnedPacket (currentPacket *KademliaPacket) {
 	currentPacket.ReturnedPacket = true;
 	network.sentPackets[currentPacket.PacketID] = currentPacket;
@@ -186,12 +194,13 @@ func (network *Network) AwaitResponse(packetID int32) {
 }
 
 func (network *Network) SendPingMessage(address string) {
-	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingReq)
+	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingSend)
 
 	reservedID := network.ReservePacketID(kademliaPacket)
 	kademliaPacket.PacketID = reservedID;
-
-	network.SendKademliaPacket(address, kademliaPacket)
+	kademliaPacket.DestinationAddress = address;
+	network.AddToChannel(kademliaPacket)
+	//network.SendKademliaPacket(address, kademliaPacket)
 	network.AwaitResponse(kademliaPacket.PacketID)
 }
 
