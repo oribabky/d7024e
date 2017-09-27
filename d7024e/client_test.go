@@ -21,8 +21,8 @@ func TestRPCs(t *testing.T) {
 //	log.Println("FIND_NODE")
 	go node1.network.SendPingMessage(ServerAddress1)
 	go node1.network.SendPingMessage(ServerAddress2)
-	go node1.network.SendPingMessage(ServerAddress3)
-	node1.network.SendPingMessage(ServerAddress1)
+	go node1.network.SendPingMessage(ServerAddress2)
+	//node1.network.SendPingMessage(ServerAddress1)
 
 	//test ping
 	log.Println("PING")

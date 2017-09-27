@@ -142,7 +142,7 @@ func (network *Network) AddToChannel(packet *KademliaPacket) {
 }
 
 func (network *Network) SendKademliaPacket(address string, packet *KademliaPacket) {
-	network.mux.Lock()
+//	network.mux.Lock()
 	//establish a connection to the target server.
 
 	targetAddr, err := net.ResolveUDPAddr("udp", address)
@@ -160,7 +160,7 @@ func (network *Network) SendKademliaPacket(address string, packet *KademliaPacke
 
 	_, err = conn.Write(buf)
 	CheckError(err, "Couldn't write the message")
-	network.mux.Unlock()
+//	network.mux.Unlock()
 
 }
 
@@ -196,8 +196,7 @@ func (network *Network) AwaitResponse(packetID int32) {
 func (network *Network) SendPingMessage(address string) {
 	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingSend)
 
-	reservedID := network.ReservePacketID(kademliaPacket)
-	kademliaPacket.PacketID = reservedID;
+	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
 	kademliaPacket.DestinationAddress = address;
 	network.AddToChannel(kademliaPacket)
 	//network.SendKademliaPacket(address, kademliaPacket)
