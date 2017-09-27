@@ -13,16 +13,15 @@ func TestRPCs(t *testing.T) {
 	node1 := NewNode("", ClientAddress)
 	go node1.NodeUp()
 
-	//test ping
-	log.Println("---PING---")
-	node1.network.SendPingMessage(ServerAddress)
 
-	log.Println("---FIND_NODE---")
+
 	//test find_node
+	log.Println("FIND_NODE")
 	node1.network.SendFindNodeMessage(ServerAddress, node1.Me.ID.String())
-	for {
 
-	}
+	//test ping
+	log.Println("PING")
+	node1.network.SendPingMessage(ServerAddress)
 }
 /*
 func TestFindNode(t *testing.T) {

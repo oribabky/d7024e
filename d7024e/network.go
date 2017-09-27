@@ -4,18 +4,23 @@ import (
 	"github.com/golang/protobuf/proto"
 	//"fmt"
 	"net"
+	"sync"
 	)
 
-type RPC struct {
+/*type RPC struct {
 	srcAddress string
 	procedure string
 	targetID string
-}
+}*/
 
 type Network struct {
 	contact *Contact
-	channel chan *RPC
+	channel chan *KademliaPacket
+	packetID int32
+	sentPackets []*KademliaPacket
+	mux sync.Mutex
 }
+
 
 //protocol for how rpcs should be written as strings
 const PingReq string = "pingRequest"
@@ -23,41 +28,53 @@ const PingResp string = "pingResponse"
 const FindNodeReq string = "findNodeRequest"
 const FindNodeResp string = "findNodeResponse"
 
-func NewRPC(srcAddress string, procedure string, targetID string) RPC {
+/*func NewRPC(srcAddress string, procedure string, targetID string) RPC {
 	return RPC{srcAddress, procedure, targetID}
-}
+}*/
 
 func NewNetwork(contact *Contact) Network {
-	return Network{contact, make(chan *RPC)}
+	return Network{contact, make(chan *KademliaPacket), 0, make([]*KademliaPacket, 0), sync.Mutex{}}
+}
+
+
+func (network *Network) ReservePacketID(packet *KademliaPacket) int32 {
+	/* This function will append a packet to sentPackets[] and incremenet packetID. 
+	We need to lock the access to packetID. */
+	network.mux.Lock()
+	oldValue := network.packetID;
+	network.packetID++
+	network.sentPackets = append(network.sentPackets, packet)
+	packet.PacketID = oldValue;
+	defer network.mux.Unlock()
+	return oldValue;
 }
 
 func (network *Network) RequestHandler(rt *RoutingTable) {
 	//Handles requests coming from the channel.
 	for {
 
-		rpc := <-network.channel
-		log.Println("handling: " + rpc.procedure + 
-			" from " + rpc.srcAddress)
+		currentPacket := <-network.channel
+		log.Println("handling: " + currentPacket.Procedure + 
+			" from " + currentPacket.SourceAddress)
 
-		switch rpc.procedure {
+		switch currentPacket.Procedure {
 		case PingReq:
-			/*//THIS MIGHT NEED TO BE CHANGED SO SENDKADEMLIAPACKET
-			//DOESNT NEED A CONTACT EACH TIME.
-			srcNode := "FFFFFFFF00000000000000000000000000000000";
-			target := NewContact(NewKademliaID(srcNode), rpc.srcAddress); */
-
 			kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingResp)
-			network.SendKademliaPacket(rpc.srcAddress, kademliaPacket)
+			kademliaPacket.PacketID = currentPacket.PacketID;
+
+			network.SendKademliaPacket(currentPacket.SourceAddress, kademliaPacket)
 
 		case PingResp:
 			log.Println("Pinged and received response from " + 
-				rpc.srcAddress)
+				currentPacket.SourceAddress)
+			network.MarkReturnedPacket(currentPacket)
 
 		case FindNodeReq:
-			targetID := NewKademliaID(rpc.targetID)
+			targetID := NewKademliaID(currentPacket.TargetID)
 			kClosest := rt.FindClosestContacts(targetID, K)
 
 			kademliaPacket := network.CreateKademliaPacket(network.contact.Address, FindNodeResp)
+			kademliaPacket.PacketID = currentPacket.PacketID;
 
 			for i := range kClosest {
 				log.Println(kClosest[i].ID.String())
@@ -68,25 +85,22 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 				kademliaPacket.Contacts = append(kademliaPacket.Contacts, &contactPacket)
 			} 
 
-			network.SendKademliaPacket(rpc.srcAddress, kademliaPacket)
+			network.SendKademliaPacket(currentPacket.SourceAddress, kademliaPacket)
 
 
 		case FindNodeResp:
 			log.Println("Find_node response received from " + 
-				rpc.srcAddress)
+				currentPacket.SourceAddress)
+			network.MarkReturnedPacket(currentPacket)
+			for i := range currentPacket.Contacts {
+				log.Println(currentPacket.Contacts[i].ID)
+			}
 			//for i := range rpc.
 			//find k closest nodes to the target ID from my routing table.
 			
 		}
 	}
-	/*switch rpc {
-	case PingReq:
-		channel <- rpc
-	case PingResp:
-		channel <- rpc
-	default:
-		log.Println("unknown RPC")
-	} */
+	
 }
 
 func (network *Network) Listen() {
@@ -105,8 +119,8 @@ func (network *Network) Listen() {
 		kademliaPacket := &KademliaPacket{}
 		err = proto.Unmarshal(buf[0:n], kademliaPacket)
 		if addr != nil {
-			rpcRequest := NewRPC(kademliaPacket.SourceAddress, kademliaPacket.Procedure, kademliaPacket.TargetID)
-			go network.AddToChannel(&rpcRequest)
+			//rpcRequest := NewRPC(kademliaPacket.SourceAddress, kademliaPacket.Procedure, kademliaPacket.TargetID)
+			go network.AddToChannel(kademliaPacket)
 			log.Printf("Received RPC-request: " + kademliaPacket.Procedure + " from " + kademliaPacket.SourceAddress)
 		}
 
@@ -115,8 +129,8 @@ func (network *Network) Listen() {
 	
 }
 
-func (network *Network) AddToChannel(rpc *RPC) {
-	network.channel <- rpc;
+func (network *Network) AddToChannel(packet *KademliaPacket) {
+	network.channel <- packet;
 }
 
 func (network *Network) SendKademliaPacket(address string, packet *KademliaPacket) {
@@ -152,18 +166,44 @@ func (network *Network) CreateKademliaPacket(sourceAddress string, procedure str
 		SourceAddress: sourceAddress,
 		Procedure: procedure,
 	}
+
+
 	return &kademliaPacket
+}
+func (network *Network) MarkReturnedPacket (currentPacket *KademliaPacket) {
+	currentPacket.ReturnedPacket = true;
+	network.sentPackets[currentPacket.PacketID] = currentPacket;
+}
+
+
+func (network *Network) AwaitResponse(packetID int32) {
+	/* This function will wait for a response from sending a RPC to a node. */
+
+	for network.sentPackets[packetID].ReturnedPacket == false {
+		//log.Println(network.sentPackets[packetID].PacketID)
+	}
+	log.Println("Response received!")
 }
 
 func (network *Network) SendPingMessage(address string) {
 	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingReq)
+
+	reservedID := network.ReservePacketID(kademliaPacket)
+	kademliaPacket.PacketID = reservedID;
+
 	network.SendKademliaPacket(address, kademliaPacket)
+	network.AwaitResponse(kademliaPacket.PacketID)
 }
 
 func (network *Network) SendFindNodeMessage(address string, targetID string) {
 	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, FindNodeReq)
 	kademliaPacket.TargetID = targetID;
+
+	reservedID := network.ReservePacketID(kademliaPacket)
+	kademliaPacket.PacketID = reservedID;
+
 	network.SendKademliaPacket(address, kademliaPacket)
+	network.AwaitResponse(kademliaPacket.PacketID)
 }
 
 func (network *Network) SendFindDataMessage(hash string) {

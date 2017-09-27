@@ -9,8 +9,11 @@ message ContactPacket {
 message KademliaPacket {
 	string SourceAddress = 1;
 	string Procedure = 2;
-	string TargetID = 3;
-	repeated ContactPacket Contacts = 4; 
+	bool ReturnedPacket = 3;
+	int32 PacketID = 4;
+	string TargetID = 5;
+	repeated ContactPacket Contacts = 6; 
+
 }
 
 
