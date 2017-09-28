@@ -64,7 +64,7 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 		case PingReq:
 			kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingResp)
 			kademliaPacket.PacketID = currentPacket.PacketID;
-
+			log.Println(currentPacket.SourceAddress)
 			network.SendKademliaPacket(currentPacket.SourceAddress, kademliaPacket)
 
 		case PingResp:
@@ -142,16 +142,15 @@ func (network *Network) AddToChannel(packet *KademliaPacket) {
 }
 
 func (network *Network) SendKademliaPacket(address string, packet *KademliaPacket) {
-//	network.mux.Lock()
+	network.mux.Lock()
 	//establish a connection to the target server.
 
 	targetAddr, err := net.ResolveUDPAddr("udp", address)
-	CheckError(err, "")
+	CheckError(err, "targetAddr")
 	localAddr, err := net.ResolveUDPAddr("udp", network.contact.Address)
-	CheckError(err, "")
+	CheckError(err, "localAddr")
 	conn, err := net.DialUDP("udp", localAddr, targetAddr)
-	CheckError(err, "")
-	defer conn.Close() //if there is an error, close the connection
+	CheckError(err, "dialUDP")
 
 	data, err := proto.Marshal(packet)
 	CheckError(err, "Couldn't marshal the message")
@@ -160,7 +159,7 @@ func (network *Network) SendKademliaPacket(address string, packet *KademliaPacke
 
 	_, err = conn.Write(buf)
 	CheckError(err, "Couldn't write the message")
-//	network.mux.Unlock()
+	network.mux.Unlock()
 
 }
 
