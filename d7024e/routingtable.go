@@ -1,25 +1,27 @@
 package d7024e
 
-const bucketSize = 20
+const bucketSize = 5
 
 type RoutingTable struct {
 	me      Contact
 	buckets [IDLength * 8]*bucket
+	network *Network
 }
 
-func NewRoutingTable(me Contact) *RoutingTable {
+func NewRoutingTable(me Contact, network *Network) *RoutingTable {
 	routingTable := &RoutingTable{}
 	for i := 0; i < IDLength*8; i++ {
 		routingTable.buckets[i] = newBucket()
 	}
-	routingTable.me = me
+	routingTable.me = me;
+	routingTable.network = network;
 	return routingTable
 }
 
 func (routingTable *RoutingTable) AddContact(contact Contact) {
 	bucketIndex := routingTable.getBucketIndex(contact.ID)
 	bucket := routingTable.buckets[bucketIndex]
-	bucket.AddContact(contact)
+	bucket.AddContact(contact, routingTable.network)
 }
 
 func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count int) []Contact {

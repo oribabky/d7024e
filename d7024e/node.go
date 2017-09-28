@@ -13,16 +13,16 @@ type Node struct {
 
 func NewNode (nodeID string, address string) *Node{
 
+	//see if a nodeID was provided or not.
 	me := NewContact(NewRandomKademliaID(), address);
 	if nodeID != "" {
 		me = NewContact(NewKademliaID(nodeID), address);
-	}/* else {
-		me := NewContact(NewRandomKademliaID(), address);
-	}*/
-	
-	rt := NewRoutingTable(me)
-	kademlia := NewKademlia(&me, rt)
+	}
+
 	network := NewNetwork(&me)
+	rt := NewRoutingTable(me, &network)
+	kademlia := NewKademlia(&me, rt)
+
 	return &Node{&me, rt, &kademlia, &network}
 }
 

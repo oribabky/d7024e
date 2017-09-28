@@ -2,6 +2,7 @@ package d7024e
 
 import (
 	"container/list"
+	"log"
 )
 
 type bucket struct {
@@ -14,7 +15,7 @@ func newBucket() *bucket {
 	return bucket
 }
 
-func (bucket *bucket) AddContact(contact Contact) {
+func (bucket *bucket) AddContact(contact Contact, network *Network) {
 	var element *list.Element
 	for e := bucket.list.Front(); e != nil; e = e.Next() {
 		nodeID := e.Value.(Contact).ID
@@ -24,9 +25,19 @@ func (bucket *bucket) AddContact(contact Contact) {
 		}
 	}
 
+	//See if the element already exists in our list
 	if element == nil {
-		if bucket.list.Len() < bucketSize {
-			bucket.list.PushFront(contact)
+		if bucket.list.Len() < bucketSize {	//add to the bucket
+			bucket.list.PushFront(contact)	
+		} else {	//ping the least recently seen item and see if its still alive
+			log.Println("bucket full! pinging LRS contact..")
+			leastRecentlySeen := bucket.list.Back().Value.(Contact)
+			alive := network.SendPingMessage(leastRecentlySeen.Address)
+
+			if alive == false {		//remove the least recently seen item and add the name item
+				bucket.list.Remove(bucket.list.Back())
+				bucket.list.PushFront(contact)
+			}
 		}
 	} else {
 		bucket.list.MoveToFront(element)

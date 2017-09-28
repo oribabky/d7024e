@@ -6,9 +6,9 @@ import (
 
 func main () {
 	
-	node1 := d.NewNode("", ":8000")
-	node2 := d.NewNode("", ":8001")
-	node3 := d.NewNode("", ":8002")
+	node1 := d.NewNode("", "localhost:8000")
+	node2 := d.NewNode("", "localhost:8001")
+	node3 := d.NewNode("", "localhost:8002")
 
 	for i := 0; i < 10; i++ {
 		node1.Rt.AddContact(d.NewContact(d.NewRandomKademliaID(), "localhost:8002"))

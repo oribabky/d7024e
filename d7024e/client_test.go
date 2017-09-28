@@ -5,10 +5,10 @@ import (
 	"log"
 )
 
-const ClientAddress string  = ":7999"
-const ServerAddress1 string = ":8000"
-const ServerAddress2 string = ":8001"
-const ServerAddress3 string = ":8002"
+const ClientAddress string  = "localhost:7999"
+const ServerAddress1 string = "localhost:8000"
+const ServerAddress2 string = "localhost:8001"
+const ServerAddress3 string = "localhost:8002"
 
 func TestRPCs(t *testing.T) {
 	
@@ -18,18 +18,23 @@ func TestRPCs(t *testing.T) {
 
 
 	//test find_node
-//	log.Println("FIND_NODE")
+	log.Println("FIND_NODE")
 	go node1.network.SendPingMessage(ServerAddress1)
 	go node1.network.SendPingMessage(ServerAddress2)
-	go node1.network.SendPingMessage(ServerAddress3)
-	//node1.network.SendPingMessage(ServerAddress1)
+	/*ping3 := go node1.network.SendPingMessage(ServerAddress3)
+	ping4 := node1.network.SendPingMessage(ServerAddress1)
 
 	//test ping
 	log.Println("PING")
-	//node1.network.SendPingMessage(ServerAddress1)
-	for {
+	log.Println(ping1)
+	log.Println(ping2)
+	log.Println(ping3)
+	log.Println(ping4) */
 
-	}
+	//node1.network.SendPingMessage(ServerAddress1)
+
+
+	
 }
 /*
 func TestFindNode(t *testing.T) {
