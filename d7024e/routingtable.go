@@ -1,6 +1,6 @@
 package d7024e
 
-const bucketSize = 5
+const bucketSize = 8
 
 type RoutingTable struct {
 	me      Contact

@@ -30,10 +30,11 @@ func (bucket *bucket) AddContact(contact Contact, network *Network) {
 		if bucket.list.Len() < bucketSize {	//add to the bucket
 			bucket.list.PushFront(contact)	
 		} else {	//ping the least recently seen item and see if its still alive
-			log.Println("bucket full! pinging LRS contact..")
+			log.Println("bucket full! " + "I am " + contact.ID.String() + " pinging LRS contact..")
 			leastRecentlySeen := bucket.list.Back().Value.(Contact)
+			log.Println("LSR: " + leastRecentlySeen.Address)
 			alive := network.SendPingMessage(leastRecentlySeen.Address)
-
+			log.Println(alive)
 			if alive == false {		//remove the least recently seen item and add the name item
 				bucket.list.Remove(bucket.list.Back())
 				bucket.list.PushFront(contact)

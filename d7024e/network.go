@@ -31,10 +31,6 @@ const PingResp string = "pingResponse"
 const FindNodeReq string = "findNodeRequest"
 const FindNodeResp string = "findNodeResponse"
 
-/*func NewRPC(srcAddress string, procedure string, targetID string) RPC {
-	return RPC{srcAddress, procedure, targetID}
-}*/
-
 func NewNetwork(contact *Contact) Network {
 	serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
 	CheckError(err, "resolveError")
@@ -71,7 +67,6 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 		case PingReq:
 			kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingResp)
 			kademliaPacket.PacketID = currentPacket.PacketID;
-			log.Println(currentPacket.SourceAddress)
 			network.SendKademliaPacket(currentPacket.SourceAddress, kademliaPacket)
 
 		case PingResp:
@@ -120,19 +115,16 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 func (network *Network) Listen() {
 	buf := make([]byte, 1024)
 
-	//establish a connection 
-	/* serverAddr, err := net.ResolveUDPAddr("udp", network.contact.Address)
+	/* serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
 	CheckError(err, "resolveError")
-	network.connection, err = net.ListenUDP("udp", serverAddr)
+	connection, err := net.ListenUDP("udp", serverAddr)
 	CheckError(err, "listenError") */
-	//defer network.connection.Close() //close the connection when something is returned
 
 	for {
-		log.Println("listening...")
+		//log.Println("listening...")
 		n, addr, err := network.connection.ReadFromUDP(buf)
 		kademliaPacket := &KademliaPacket{}
 		err = proto.Unmarshal(buf[0:n], kademliaPacket)
-		log.Println(kademliaPacket.Procedure)
 		if addr != nil {
 			//rpcRequest := NewRPC(kademliaPacket.SourceAddress, kademliaPacket.Procedure, kademliaPacket.TargetID)
 			go network.AddToChannel(kademliaPacket)
@@ -140,8 +132,13 @@ func (network *Network) Listen() {
 		}
 
 		CheckError(err, "Couldn't listen ")
+		defer network.connection.Close()
 	}
 	
+}
+
+func (network *Network) CloseConnection() {
+	network.connection.Close()
 }
 
 func (network *Network) AddToChannel(packet *KademliaPacket) {
@@ -153,7 +150,6 @@ func (network *Network) SendKademliaPacket(address string, packet *KademliaPacke
 
 	targetAddr, err := net.ResolveUDPAddr("udp", address)
 	CheckError(err, "targetAddr")
-	log.Println(targetAddr)
 	/*localAddr, err := net.ResolveUDPAddr("udp", network.contact.Address)
 	CheckError(err, "localAddr")
 	conn, err := net.DialUDP("udp", localAddr, targetAddr)
@@ -224,7 +220,6 @@ func (network *Network) SendPingMessage(address string) bool {
 	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
 	kademliaPacket.DestinationAddress = address;
 	network.AddToChannel(kademliaPacket)
-	//network.SendKademliaPacket(address, kademliaPacket)
 	
 	alive := network.AwaitResponse(kademliaPacket.PacketID)
 	return alive
