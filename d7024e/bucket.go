@@ -25,7 +25,7 @@ func (bucket *bucket) AddContact(contact Contact, network *Network) {
 		}
 	}
 
-	//See if the element already exists in our list
+	// if the element doesnt already exists in our list
 	if element == nil {
 		if bucket.list.Len() < bucketSize {	//add to the bucket
 			bucket.list.PushFront(contact)	
@@ -34,10 +34,12 @@ func (bucket *bucket) AddContact(contact Contact, network *Network) {
 			leastRecentlySeen := bucket.list.Back().Value.(Contact)
 			log.Println("LSR: " + leastRecentlySeen.Address)
 			alive := network.SendPingMessage(leastRecentlySeen.Address)
-			log.Println(alive)
+
 			if alive == false {		//remove the least recently seen item and add the name item
 				bucket.list.Remove(bucket.list.Back())
 				bucket.list.PushFront(contact)
+			} else {	//if the LSR node responds, move it to the front of the list.
+				bucket.list.MoveToFront(bucket.list.Back())
 			}
 		}
 	} else {
