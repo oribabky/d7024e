@@ -22,7 +22,6 @@ func (kademlia *Kademlia) LookupContact(target *Contact, node *Node) {
 
 }
 
-func ()
 
 func (kademlia *Kademlia) LookupData(hash string) {
 	// TODO

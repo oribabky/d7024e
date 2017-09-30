@@ -42,8 +42,8 @@ func TestRPCs(t *testing.T) {
 	//test find_node, should be able to be sent asynchronously.
 	log.Println("FIND_NODE")
 	go node1.network.SendFindNodeMessage(ServerAddress1, node1.Me.ID.String())
-	go node1.network.SendFindNodeMessage(ServerAddress2, node1.Me.ID.String())
-	go node1.network.SendFindNodeMessage(ServerAddress3, node1.Me.ID.String())
+	go node1.network.SendFindNodeMessage(ServerAddress1, node1.Me.ID.String())
+	go node1.network.SendFindNodeMessage(ServerAddress1, node1.Me.ID.String())
 
 	for {
 		c := <- node1.network.ReturnedContacts
