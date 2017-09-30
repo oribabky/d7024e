@@ -28,8 +28,10 @@ type Network struct {
 const PingSend string = "pingSend"
 const PingReq string = "pingRequest"
 const PingResp string = "pingResponse"
+
 const FindNodeReq string = "findNodeRequest"
 const FindNodeResp string = "findNodeResponse"
+const FindNodeSend string = "findNodeSend"
 
 func NewNetwork(contact *Contact) Network {
 	serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
@@ -40,6 +42,9 @@ func NewNetwork(contact *Contact) Network {
 	return Network{contact, make(chan *KademliaPacket), 0, make([]*KademliaPacket, 0), sync.Mutex{}, connection}
 }
 
+func RandomRPCID () int32 {
+	return uint8(rand.Intn(256))
+}
 
 func (network *Network) ReservePacketID(packet *KademliaPacket) int32 {
 	/* This function will append a packet to sentPackets[] and incremenet packetID. 
@@ -63,7 +68,7 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 
 		switch currentPacket.Procedure {
 
-
+		//PING
 		case PingReq:
 			kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingResp)
 			kademliaPacket.PacketID = currentPacket.PacketID;
@@ -78,6 +83,8 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			currentPacket.Procedure = PingReq
 			network.SendKademliaPacket(currentPacket.DestinationAddress, currentPacket)
 
+
+		//FIND_NODE
 		case FindNodeReq:
 			targetID := NewKademliaID(currentPacket.TargetID)
 			kClosest := rt.FindClosestContacts(targetID, K)
@@ -96,7 +103,6 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 
 			network.SendKademliaPacket(currentPacket.SourceAddress, kademliaPacket)
 
-
 		case FindNodeResp:
 			log.Println("Find_node response received from " + 
 				currentPacket.SourceAddress)
@@ -106,7 +112,10 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			}
 			//for i := range rpc.
 			//find k closest nodes to the target ID from my routing table.
-			
+		
+		case FindNodeSend:
+			currentPacket.Procedure = FindNodeReq
+			network.SendKademliaPacket(currentPacket.DestinationAddress, currentPacket)
 		}
 	}
 	
@@ -115,18 +124,12 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 func (network *Network) Listen() {
 	buf := make([]byte, 1024)
 
-	/* serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
-	CheckError(err, "resolveError")
-	connection, err := net.ListenUDP("udp", serverAddr)
-	CheckError(err, "listenError") */
-
 	for {
 		//log.Println("listening...")
 		n, addr, err := network.connection.ReadFromUDP(buf)
 		kademliaPacket := &KademliaPacket{}
 		err = proto.Unmarshal(buf[0:n], kademliaPacket)
 		if addr != nil {
-			//rpcRequest := NewRPC(kademliaPacket.SourceAddress, kademliaPacket.Procedure, kademliaPacket.TargetID)
 			go network.AddToChannel(kademliaPacket)
 			log.Printf("Received RPC-request: " + kademliaPacket.Procedure + " from " + kademliaPacket.SourceAddress)
 		}

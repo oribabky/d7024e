@@ -11,9 +11,10 @@ message KademliaPacket {
 	string DestinationAddress = 2;
 	string Procedure = 3;
 	bool ReturnedPacket = 4;
-	int32 PacketID = 5;
-	string TargetID = 6;
-	repeated ContactPacket Contacts = 7; 
+	int32 RandomID = 5;
+	int32 PacketID = 6;
+	string TargetID = 7;
+	repeated ContactPacket Contacts = 8; 
 
 }
 
