@@ -19,6 +19,8 @@ const ClientAddress8 string = "localhost:7991"
 const ServerAddress1 string = "localhost:8000"
 const ServerAddress2 string = "localhost:8001"
 const ServerAddress3 string = "localhost:8002"
+const ServerAddress4 string = "localhost:8003"
+const OfflineServer string = "localhost:9000"
 
 func TestRPCs(t *testing.T) {
 	
@@ -26,25 +28,36 @@ func TestRPCs(t *testing.T) {
 	go node1.NodeUp()
 
 
-
-	//test find_node
-	log.Println("FIND_NODE")
-	go node1.network.SendPingMessage(ServerAddress1)
-	node1.network.SendPingMessage(ServerAddress2)
-	/*ping3 := go node1.network.SendPingMessage(ServerAddress3)
-	ping4 := node1.network.SendPingMessage(ServerAddress1)
-
 	//test ping
 	log.Println("PING")
-	log.Println(ping1)
-	log.Println(ping2)
-	log.Println(ping3)
-	log.Println(ping4) */
 
+	node1.network.SendPingMessage(ServerAddress1)
+	node1.network.SendPingMessage(ServerAddress2)
+    node1.network.SendPingMessage(ServerAddress3)
+	node1.network.SendPingMessage(ServerAddress4)
+	node1.network.SendPingMessage(OfflineServer)
+
+
+
+	//test find_node, should be able to be sent asynchronously.
+	log.Println("FIND_NODE")
+	go node1.network.SendFindNodeMessage(ServerAddress1, node1.Me.ID.String())
+	go node1.network.SendFindNodeMessage(ServerAddress2, node1.Me.ID.String())
+	go node1.network.SendFindNodeMessage(ServerAddress3, node1.Me.ID.String())
+
+	for {
+		c := <- node1.network.ReturnedContacts
+		log.Println(c.ID.String())
+	}
 	//node1.network.SendPingMessage(ServerAddress1)
 
-	node1.network.CloseConnection();
 	
+	
+
+	for {
+
+	} 
+	node1.network.CloseConnection();
 } 
 /*
 func TestFindNode(t *testing.T) {

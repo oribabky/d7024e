@@ -4,13 +4,13 @@ import (
 	"testing"
 	"fmt"
 	"log"
-	"strconv"
+	//"strconv"
 )
 
 
 /* Test case 1001: FindClosestContacts should return k closest nodes ordered in distance to source node. */
 func TestRoutingTable_1001(t *testing.T) {
-	
+	log.Println("testing")
 	node0 := NewNode("", ClientAddress)
 	srcNode := "FFFFFFFF00000000000000000000000000000000";
 	node1 := "1111111100000000000000000000000000000000";
@@ -138,7 +138,7 @@ func TestRoutingTable_1004(t *testing.T) {
 	node1.Rt.AddContact(*node9.Me)
 
 
-	contacts := node1.Rt.FindClosestContacts(node2.Me.ID, 20)
+	/*contacts := node1.Rt.FindClosestContacts(node2.Me.ID, 20)
 	for i := range contacts {
 		log.Println(contacts[i].ID.String())
 		log.Println("bucket index: " + strconv.Itoa(node1.Rt.getBucketIndex(contacts[i].ID)))
@@ -155,7 +155,7 @@ func TestRoutingTable_1004(t *testing.T) {
 	log.Println("\n")
 	for e := node1.Rt.buckets[chosenBucketIndex].list.Front(); e != nil; e = e.Next() {
 		log.Println(e.Value.(Contact).ID.String())
-	}
+	} */
 
 	node1.network.CloseConnection();
 	node2.network.CloseConnection();

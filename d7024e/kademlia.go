@@ -5,7 +5,6 @@ import (
 )
 
 type Kademlia struct {
-	//network Network
 	rt *RoutingTable
 }
 
@@ -18,11 +17,12 @@ const K int = 3;
 
 
 
-func (kademlia *Kademlia) LookupContact(target *Contact) {
+func (kademlia *Kademlia) LookupContact(target *Contact, node *Node) {
 	//contacts := kademlia.rt.FindClosestContacts(target.ID, intk)
 
-
 }
+
+func ()
 
 func (kademlia *Kademlia) LookupData(hash string) {
 	// TODO

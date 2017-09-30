@@ -2,7 +2,7 @@ package d7024e
 import (
 	"log"
 	"github.com/golang/protobuf/proto"
-	//"fmt"
+	"math/rand"
 	"net"
 	"sync"
 	"time"
@@ -16,11 +16,17 @@ import (
 
 type Network struct {
 	contact *Contact
-	channel chan *KademliaPacket
+	packetQueue chan *KademliaPacket
 	packetID int32
 	sentPackets []*KademliaPacket
 	mux sync.Mutex
 	connection *net.UDPConn
+	ReturnedContacts chan *Contact
+}
+
+type File struct {
+	key *KademliaID
+	value string
 }
 
 
@@ -39,11 +45,7 @@ func NewNetwork(contact *Contact) Network {
 	connection, err := net.ListenUDP("udp", serverAddr)
 	CheckError(err, "listenError")
 
-	return Network{contact, make(chan *KademliaPacket), 0, make([]*KademliaPacket, 0), sync.Mutex{}, connection}
-}
-
-func RandomRPCID () int32 {
-	return uint8(rand.Intn(256))
+	return Network{contact, make(chan *KademliaPacket), 0, make([]*KademliaPacket, 0), sync.Mutex{}, connection, make(chan *Contact)}
 }
 
 func (network *Network) ReservePacketID(packet *KademliaPacket) int32 {
@@ -59,10 +61,10 @@ func (network *Network) ReservePacketID(packet *KademliaPacket) int32 {
 }
 
 func (network *Network) RequestHandler(rt *RoutingTable) {
-	//Handles requests coming from the channel.
+	//Handles requests coming from the packetQueue.
 	for {
 
-		currentPacket := <-network.channel
+		currentPacket := <-network.packetQueue
 		log.Println("handling: " + currentPacket.Procedure + 
 			" from " + currentPacket.SourceAddress)
 
@@ -106,9 +108,10 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 		case FindNodeResp:
 			log.Println("Find_node response received from " + 
 				currentPacket.SourceAddress)
-			network.MarkReturnedPacket(currentPacket)
+			//network.MarkReturnedPacket(currentPacket)
 			for i := range currentPacket.Contacts {
-				log.Println(currentPacket.Contacts[i].ID)
+				c := NewContact(NewKademliaID(currentPacket.Contacts[i].ID), currentPacket.Contacts[i].Address)
+				go network.AddToContactChannel(&c);
 			}
 			//for i := range rpc.
 			//find k closest nodes to the target ID from my routing table.
@@ -130,7 +133,7 @@ func (network *Network) Listen() {
 		kademliaPacket := &KademliaPacket{}
 		err = proto.Unmarshal(buf[0:n], kademliaPacket)
 		if addr != nil {
-			go network.AddToChannel(kademliaPacket)
+			go network.AddToPacketChannel(kademliaPacket)
 			log.Printf("Received RPC-request: " + kademliaPacket.Procedure + " from " + kademliaPacket.SourceAddress)
 		}
 
@@ -144,8 +147,12 @@ func (network *Network) CloseConnection() {
 	network.connection.Close()
 }
 
-func (network *Network) AddToChannel(packet *KademliaPacket) {
-	network.channel <- packet;
+func (network *Network) AddToPacketChannel(packet *KademliaPacket) {
+	network.packetQueue <- packet;
+}
+
+func (network *Network) AddToContactChannel(contact *Contact) {
+	network.ReturnedContacts <- contact;
 }
 
 func (network *Network) SendKademliaPacket(address string, packet *KademliaPacket) {
@@ -171,13 +178,14 @@ func (network *Network) SendKademliaPacket(address string, packet *KademliaPacke
 func (network *Network) CreateKademliaPacket(sourceAddress string, procedure string) *KademliaPacket {
 
 	//check that the procedure is one defined by the constants in this file.
-	if procedure != PingReq && procedure != PingResp && procedure != FindNodeReq && procedure != FindNodeResp && procedure != PingSend {
+	if procedure != PingReq && procedure != PingResp && procedure != FindNodeReq && procedure != FindNodeResp && procedure != PingSend && procedure != FindNodeSend{
 		log.Println("bad procedure.." + procedure) //NEED ERROR HANDLING
 	}
 
 	kademliaPacket := KademliaPacket{
 		SourceAddress: sourceAddress,
 		Procedure: procedure,
+		RandomID: int32(rand.Intn(256)),
 	}
 	return &kademliaPacket
 }
@@ -194,7 +202,7 @@ func (network *Network) AwaitResponse(packetID int32) bool{
 	alive := false;
 
 	start := time.Now()
-	limit := 100 * time.Millisecond	//how long do we wait for a response?
+	limit := 500 * time.Millisecond	//how long time do we wait for a response?
 	t := time.Now()
 	elapsed := t.Sub(start)
 
@@ -222,21 +230,23 @@ func (network *Network) SendPingMessage(address string) bool {
 
 	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
 	kademliaPacket.DestinationAddress = address;
-	network.AddToChannel(kademliaPacket)
-	
+	go network.AddToPacketChannel(kademliaPacket)
+	//go network.AwaitResponse(kademliaPacket.PacketID)
 	alive := network.AwaitResponse(kademliaPacket.PacketID)
 	return alive
 }
 
 func (network *Network) SendFindNodeMessage(address string, targetID string) {
-	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, FindNodeReq)
+	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, FindNodeSend)
+
+
+	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
 	kademliaPacket.TargetID = targetID;
 
-	reservedID := network.ReservePacketID(kademliaPacket)
-	kademliaPacket.PacketID = reservedID;
+	kademliaPacket.DestinationAddress = address;
+	go network.AddToPacketChannel(kademliaPacket)
 
-	network.SendKademliaPacket(address, kademliaPacket)
-	network.AwaitResponse(kademliaPacket.PacketID)
+	//network.AwaitResponse(kademliaPacket.PacketID)
 }
 
 func (network *Network) SendFindDataMessage(hash string) {
