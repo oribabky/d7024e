@@ -3,12 +3,15 @@ package d7024e
 import (
 	"testing"
 	"fmt"
+	"log"
+	"strconv"
 )
+
 
 /* Test case 1001: FindClosestContacts should return k closest nodes ordered in distance to source node. */
 func TestRoutingTable_1001(t *testing.T) {
 	
-
+	node0 := NewNode("", ClientAddress)
 	srcNode := "FFFFFFFF00000000000000000000000000000000";
 	node1 := "1111111100000000000000000000000000000000";
 	node2 := "1111111200000000000000000000000000000000";
@@ -19,7 +22,7 @@ func TestRoutingTable_1001(t *testing.T) {
 	//expected k closest in the order they should they appear.
 	expected := [5]string{node5, node4, node3, node2, node1}
 
-	rt := NewRoutingTable(NewContact(NewKademliaID(srcNode), "localhost:8000"))
+	rt := node0.Rt;
 	rt.AddContact(NewContact(NewKademliaID(node1), "localhost:8002"))
 	rt.AddContact(NewContact(NewKademliaID(node2), "localhost:8002"))
 	rt.AddContact(NewContact(NewKademliaID(node3), "localhost:8002"))
@@ -35,7 +38,7 @@ func TestRoutingTable_1001(t *testing.T) {
 		}
 	}
 
-
+	node0.network.CloseConnection();
 }
 
 /* Test case 1002: FindClosestContact should return k items even if k is higher than the amount of items available. */
@@ -45,7 +48,9 @@ func TestRoutingTable_1002(t *testing.T) {
 	node2 := "1111111200000000000000000000000000000000";
 	node3 := "1111111300000000000000000000000000000000";
 
-	rt := NewRoutingTable(NewContact(NewKademliaID(node1), "localhost:8000"))
+	node0 := NewNode("", ClientAddress)
+	rt := node0.Rt;
+
 	rt.AddContact(NewContact(NewKademliaID(node2), "localhost:8002"))
 	rt.AddContact(NewContact(NewKademliaID(node3), "localhost:8002"))
 
@@ -57,15 +62,18 @@ func TestRoutingTable_1002(t *testing.T) {
 	if len(kClosest) != expectedSize {
 			t.Error("error in test case 1002")
 		}
+	node0.network.CloseConnection();
+
 }
 
 /* Test case 1003: AddContact should add a contact to the routing table only if that ID is not already taken, regardless of port used.*/
 func TestRoutingTable_1003(t *testing.T) {
-	srcNode := "FFFFFFFF00000000000000000000000000000000";
 	node1 := "1111111100000000000000000000000000000000";
 	node2 := "1111111200000000000000000000000000000000";
 
-	rt := NewRoutingTable(NewContact(NewKademliaID(srcNode), "localhost:8000"))
+	node0 := NewNode("", ClientAddress)
+	rt := node0.Rt;
+
 	rt.AddContact(NewContact(NewKademliaID(node1), "localhost:8002"))
 	rt.AddContact(NewContact(NewKademliaID(node2), "localhost:8002"))
 
@@ -91,8 +99,76 @@ func TestRoutingTable_1003(t *testing.T) {
 	if nodes[1].Address == newPort {
 		t.Error("error in test case 1003")
 	}
+	
+	node0.network.CloseConnection();
 }
 
+/* Test case 1004: When adding a contact to the routing table bucket that is full, the system should ping the least
+	recently seen node in the bucket. If it responds, then nothing should be done. Otherwise if the node doesnt respond
+	it should be evicted from the bucket and the new contact should be added. */
+func TestRoutingTable_1004(t *testing.T) {	
+
+	node1 := NewNode ("1111111100000000000000000000000000000000", ClientAddress);
+	node2 := NewNode ("1111111200000000000000000000000000000000", ClientAddress1);
+	node3 := NewNode ("1111111300000000000000000000000000000000", ClientAddress2);
+	node4 := NewNode ("1111111400000000000000000000000000000000", ClientAddress3);
+	node5 := NewNode ("1111111500000000000000000000000000000000", ClientAddress4);
+	node6 := NewNode ("1111111600000000000000000000000000000000", ClientAddress5);
+	node7 := NewNode ("1111111700000000000000000000000000000000", ClientAddress6);
+	node8 := NewNode ("1111111800000000000000000000000000000000", ClientAddress7);
+	node9 := NewNode ("1111111900000000000000000000000000000000", ClientAddress8);
+
+	go node1.NodeUp()
+	go node2.NodeUp()
+	go node3.NodeUp()
+	go node4.NodeUp()
+ 	go node5.NodeUp()
+	go node6.NodeUp()
+	go node7.NodeUp()
+	go node8.NodeUp()
+	go node9.NodeUp() 
+
+	node1.Rt.AddContact(*node2.Me)
+	node1.Rt.AddContact(*node3.Me)
+ 	node1.Rt.AddContact(*node4.Me)
+	node1.Rt.AddContact(*node5.Me)
+	node1.Rt.AddContact(*node6.Me) 
+	node1.Rt.AddContact(*node7.Me)
+	node1.Rt.AddContact(*node8.Me) 
+	node1.Rt.AddContact(*node9.Me)
+
+
+	contacts := node1.Rt.FindClosestContacts(node2.Me.ID, 20)
+	for i := range contacts {
+		log.Println(contacts[i].ID.String())
+		log.Println("bucket index: " + strconv.Itoa(node1.Rt.getBucketIndex(contacts[i].ID)))
+	}
+
+	chosenBucketIndex := 30;
+	for e := node1.Rt.buckets[chosenBucketIndex].list.Front(); e != nil; e = e.Next() {
+		log.Println(e.Value.(Contact).ID.String())
+	}
+
+	//now if we try to insert node7 to the routing table:
+	
+
+	log.Println("\n")
+	for e := node1.Rt.buckets[chosenBucketIndex].list.Front(); e != nil; e = e.Next() {
+		log.Println(e.Value.(Contact).ID.String())
+	}
+
+	node1.network.CloseConnection();
+	node2.network.CloseConnection();
+	node3.network.CloseConnection();
+	node4.network.CloseConnection();
+	node5.network.CloseConnection();
+	node6.network.CloseConnection();
+	node7.network.CloseConnection();
+	node8.network.CloseConnection();
+	node9.network.CloseConnection();
+
+
+}
 
 
 
