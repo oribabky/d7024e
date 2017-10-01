@@ -7,7 +7,7 @@ import (
 type Node struct {
 	Me *Contact
 	Rt *RoutingTable
-	kademlia *Kademlia
+	Kademlia *Kademlia
 	network *Network
 }
 
@@ -21,7 +21,7 @@ func NewNode (nodeID string, address string) *Node{
 
 	network := NewNetwork(&me)
 	rt := NewRoutingTable(me, &network)
-	kademlia := NewKademlia(&me, rt)
+	kademlia := NewKademlia(rt, &network)
 
 	return &Node{&me, rt, &kademlia, &network}
 }

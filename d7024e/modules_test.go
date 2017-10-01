@@ -170,5 +170,65 @@ func TestRoutingTable_1004(t *testing.T) {
 
 }
 
+/* Test case 1005: When calling the system calls "InsertContactSortedDistTarget" it should try to insert
+an item into the right place in a list sorted on distance to a certain target. */
+func Test_1005(t *testing.T) {
+
+	targetID := "FFFFFFFF00000000000000000000000000000000";
+	node1ID :="1111111100000000000000000000000000000000";
+	node2ID := "1111111300000000000000000000000000000000";
+	node3ID := "1111111500000000000000000000000000000000";
+	node4ID := "1111111700000000000000000000000000000000";
+	node5ID := "2111111900000000000000000000000000000000";
+
+	target := NewContact(NewKademliaID(targetID), "localhost:8002")
+	node1 := NewContact(NewKademliaID(node1ID), "localhost:8002")
+	node2 := NewContact(NewKademliaID(node2ID), "localhost:8002")
+	node3 := NewContact(NewKademliaID(node3ID), "localhost:8002")
+	node4 := NewContact(NewKademliaID(node4ID), "localhost:8002")
+	node5 := NewContact(NewKademliaID(node5ID), "localhost:8002")
+
+	contacts := []Contact{node5, node4, node3, node2}
+
+
+	//adding node1 should place it in the end:
+	expected := []Contact{node5, node4, node3, node2, node1}
+	contacts = InsertContactSortedDistTarget(&node1, contacts, &target)
+
+	for i := range expected {
+		if expected[i].ID.String() != contacts[i].ID.String() {
+			t.Error("error in test case 1005")
+		}
+	}
+
+	//adding node5 should place it in the beginning:
+	expected = []Contact{node5, node4, node3, node2}
+	contacts = []Contact{node4, node3, node2}
+
+	contacts = InsertContactSortedDistTarget(&node5, contacts, &target)
+
+	for i := range expected {
+		if expected[i].ID.String() != contacts[i].ID.String() {
+			t.Error("error in test case 1005")
+		}
+	}
+
+	//adding node3 should place it in the middle:
+	expected = []Contact{node5, node4, node3, node2, node1}
+	contacts = []Contact{node5, node4, node2, node1}
+
+	contacts = InsertContactSortedDistTarget(&node3, contacts, &target)
+
+	for i := range expected {
+		if expected[i].ID.String() != contacts[i].ID.String() {
+			t.Error("error in test case 1005")
+		}
+	}
+
+
+
+
+
+}
 
 
