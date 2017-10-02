@@ -4,7 +4,7 @@ import (
 	"testing"
 	"fmt"
 	"log"
-	"math/rand"
+	//"math/rand"
 	//"strconv"
 )
 
@@ -242,7 +242,8 @@ func Test_1006(t *testing.T) {
 		contacts = append(contacts, NewContact(NewRandomKademliaID(),"localhost:8000"))
 	}
 
-	randIndex := rand.Intn(nrContacts - 1)
+	randIndex := 5; //temp	
+	//randIndex := rand.Intn(nrContacts - 1)
 
 	contact1 := contacts[randIndex]
 

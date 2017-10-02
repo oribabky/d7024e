@@ -4,7 +4,7 @@ import (
 	"testing"
 	"log"
 	"time"
-	"fmt"
+	//"fmt"
 	//"math/rand"
 )
 
@@ -151,19 +151,19 @@ func Test_2002(t *testing.T) {
 	time.Sleep(time.Millisecond * 500)
 	log.Println("\nTEST Kademlia procedures..")
 
-	node1ID :="1111111100000000000000000000000000000000";
-	server1ID := "1111111300000000000000000000000000000000";
-	server2ID := "1111111500000000000000000000000000000000";
-	server3ID := "1111111700000000000000000000000000000000";
-	server4ID := "1111111900000000000000000000000000000000";
-	server5ID := "1111112100000000000000000000000000000000";
-	server6ID := "1111112300000000000000000000000000000000";
-	server7ID := "1111112500000000000000000000000000000000";
-	server8ID := "1111112700000000000000000000000000000000";
-	server9ID := "1111112900000000000000000000000000000000";
+	/*node1ID :=   "FFFFFFFF00000000000000000000000000000000";
+	server1ID := "1111111200000000000000000000000000000000";
+	server2ID := "1111111300000000000000000000000000000000";
+	server3ID := "1111111400000000000000000000000000000000";
+	server4ID := "1111111500000000000000000000000000000000";
+	server5ID := "1111111600000000000000000000000000000000";
+	server6ID := "1111111700000000000000000000000000000000";
+	server7ID := "1111111800000000000000000000000000000000";
+	server8ID := "1111111900000000000000000000000000000000";
+	server9ID := "1111111A00000000000000000000000000000000";*/
 
 	//random node ID's
-	/*node1 := NewNode("", ClientAddress)
+	node1 := NewNode("", ClientAddress)
 	server1 := NewNode("", ServerAddress1)
 	server2 := NewNode("", ServerAddress2)
 	server3 := NewNode("", ServerAddress3)
@@ -172,18 +172,18 @@ func Test_2002(t *testing.T) {
 	server6 := NewNode("", ServerAddress6)
 	server7 := NewNode("", ServerAddress7)
 	server8 := NewNode("", ServerAddress8)
-	server9 := NewNode("", ServerAddress9)*/
+	server9 := NewNode("", ServerAddress9)
 
-	node1 := NewNode(node1ID, ClientAddress)
+	/*node1 := NewNode(node1ID, ClientAddress)
 	server1 := NewNode(server1ID, ServerAddress1)
 	server2 := NewNode(server2ID, ServerAddress2)
 	server3 := NewNode(server3ID, ServerAddress3)
-	server4 := NewNode(server4ID, ServerAddress4)
-	server5 := NewNode(server5ID, ServerAddress5)
+	server4 := NewNode(server4ID, ServerAddress4)*/
+	/* server5 := NewNode(server5ID, ServerAddress5)
 	server6 := NewNode(server6ID, ServerAddress6)
 	server7 := NewNode(server7ID, ServerAddress7)
 	server8 := NewNode(server8ID, ServerAddress8)
-	server9 := NewNode(server9ID, ServerAddress9)
+	server9 := NewNode(server9ID, ServerAddress9) */
 
 	go node1.NodeUp()
 	go server1.NodeUp()
@@ -194,12 +194,13 @@ func Test_2002(t *testing.T) {
 	go server6.NodeUp()
 	go server7.NodeUp()
 	go server8.NodeUp()
-	go server9.NodeUp()
+	go server9.NodeUp() /* */
 
 	//test nodeLookup
 	log.Println("\nNODE LOOKUP")
 
 	onlineNodes := []*Node{node1, server1, server2, server3, server4, server5, server6, server7, server8, server9}
+	//onlineNodes := []*Node{node1, server1, server2, server3, server4}
 	nrOnlineNodes := len(onlineNodes)
 	log.Println(nrOnlineNodes)
 
@@ -214,43 +215,56 @@ func Test_2002(t *testing.T) {
 	} 
 
 	k := 3;
-	kClosest0 := node1.Kademlia.LookupContact(node1.Me, k)
-	kClosest1 := server1.Kademlia.LookupContact(server1.Me, k)
-	kClosest2 := server2.Kademlia.LookupContact(server2.Me, k)
-	kClosest3 := server3.Kademlia.LookupContact(server3.Me, k)
-	kClosest4 := server4.Kademlia.LookupContact(server4.Me, k)
-	kClosest5 := server5.Kademlia.LookupContact(server5.Me, k)
-	kClosest6 := server6.Kademlia.LookupContact(server6.Me, k)
-	kClosest7 := server7.Kademlia.LookupContact(server7.Me, k)
-	kClosest8 := server8.Kademlia.LookupContact(server8.Me, k)
-	kClosest9 := server9.Kademlia.LookupContact(server9.Me, k)
+	a := 2;
+	kClosest0 := node1.Kademlia.LookupContact(node1.Me, k, a)
+	kClosest1 := server1.Kademlia.LookupContact(server1.Me, k, a)
+	kClosest2 := server2.Kademlia.LookupContact(server2.Me, k, a)
+	kClosest3 := server3.Kademlia.LookupContact(server3.Me, k, a)
+	kClosest4 := server4.Kademlia.LookupContact(server4.Me, k, a)
+	kClosest5 := server5.Kademlia.LookupContact(server5.Me, k, a)
+	kClosest6 := server6.Kademlia.LookupContact(server6.Me, k, a)
+	kClosest7 := server7.Kademlia.LookupContact(server7.Me, k, a)
+	kClosest8 := server8.Kademlia.LookupContact(server8.Me, k, a)
+	kClosest9 := server9.Kademlia.LookupContact(server9.Me, k, a) 
 
 	time.Sleep(time.Millisecond * 1000)
 	kClosestAll := [][]Contact{kClosest0, kClosest1, kClosest2, kClosest3, kClosest4, kClosest5, kClosest6, kClosest7, kClosest8, kClosest9}
+	//kClosestAll := [][]Contact{kClosest0, kClosest1, kClosest2, kClosest3, kClosest4}
 
 	for i := range onlineNodes {
 		log.Println("\nI am node " + onlineNodes[i].Me.Address + " and these are my KClosest:")
 
+		kClosestMe := onlineNodes[i].Rt.FindClosestContacts(onlineNodes[i].Me.ID, k)
+
 		for o := range kClosestAll[i] {
-			fmt.Println(kClosestAll[i][o].Address)
+			/* fmt.Println("Actual: " + kClosestAll[i][o].Address)
+			fmt.Println("Expected: " + kClosestMe[o].Address) */
+			if kClosestAll[i][o].ID.String() != kClosestMe[o].ID.String() {
+				log.Println("Actual: " + kClosestAll[i][o].Address)
+				log.Println("Expected: " + kClosestMe[o].Address)
+				t.Error("error in 2002..")
+			}
 		}
+
+		onlineNodes[i].Rt.PrintRoutingTable()
 	} 
 
+
+
 	//from any node we should now be able to find the closest nodes to a given target
-	time.Sleep(time.Millisecond * 2000)
-	fmt.Println("\nactual closest:")
+/*	time.Sleep(time.Millisecond * 2000)
 
-	kClosestActual9 := server1.Kademlia.LookupContact(server9.Me, k)
-		fmt.Println(len(kClosestActual9))
-	time.Sleep(time.Millisecond * 2000)
 
-	for i := range kClosestActual9 {
-		fmt.Println("HEJ " + kClosestActual9[i].Address)
-		if kClosestActual9[i].ID.String() != kClosest9[i].ID.String() {
+	kClosestActual8 := server2.Kademlia.LookupContact(server8.Me, k)
+	time.Sleep(time.Millisecond * 2000)
+	fmt.Println("\nactual closest for node: " + server8.Me.Address)
+	for i := range kClosestActual8 {
+		fmt.Println("HEJ " + kClosestActual8[i].Address)
+		if kClosestActual8[i].ID.String() != kClosest8[i].ID.String() {
 			t.Error("error babe.")
 		}
 	}
-	
+	*/
 
 
 
@@ -334,11 +348,11 @@ func Test_2002(t *testing.T) {
 	server2.network.CloseConnection();
 	server3.network.CloseConnection();
 	server4.network.CloseConnection();
-	server5.network.CloseConnection();
+	/*server5.network.CloseConnection();
 	server6.network.CloseConnection();
 	server7.network.CloseConnection();
 	server8.network.CloseConnection();
-	server9.network.CloseConnection();
+	server9.network.CloseConnection(); */
 
 	time.Sleep(time.Millisecond * 500)
 

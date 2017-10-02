@@ -1,5 +1,8 @@
 package d7024e
 
+import (
+	"log"
+)
 const bucketSize = 8
 
 type RoutingTable struct {
@@ -62,4 +65,13 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 	}
 
 	return IDLength*8 - 1
+}
+
+func (routingTable *RoutingTable) PrintRoutingTable () {
+	wholeRT := routingTable.FindClosestContacts(routingTable.me.ID, 1000)
+
+	log.Println("I am node " + routingTable.me.Address + ". This is my Routing Table:")
+	for i := range wholeRT {
+		log.Println(wholeRT[i].Address)
+	}
 }

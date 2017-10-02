@@ -1,8 +1,9 @@
 package d7024e
 
 import (
-	"fmt"
+	"log"
 	"sort"
+	"fmt"
 )
 
 type Contact struct {
@@ -53,4 +54,12 @@ func (candidates *ContactCandidates) Swap(i, j int) {
 
 func (candidates *ContactCandidates) Less(i, j int) bool {
 	return candidates.contacts[i].Less(&candidates.contacts[j])
+}
+
+
+func PrintContactList(contacts []Contact) {
+	for n := range contacts {
+		log.Println(contacts[n].Address)
+	}
+	
 }
