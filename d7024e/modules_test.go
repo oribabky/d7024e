@@ -4,6 +4,7 @@ import (
 	"testing"
 	"fmt"
 	"log"
+	"math/rand"
 	//"strconv"
 )
 
@@ -106,7 +107,7 @@ func TestRoutingTable_1003(t *testing.T) {
 /* Test case 1004: When adding a contact to the routing table bucket that is full, the system should ping the least
 	recently seen node in the bucket. If it responds, then nothing should be done. Otherwise if the node doesnt respond
 	it should be evicted from the bucket and the new contact should be added. */
-func TestRoutingTable_1004(t *testing.T) {	
+func testRoutingTable_1004(t *testing.T) {	
 
 	node1 := NewNode ("1111111100000000000000000000000000000000", ClientAddress);
 	node2 := NewNode ("1111111200000000000000000000000000000000", ClientAddress1);
@@ -229,6 +230,25 @@ func Test_1005(t *testing.T) {
 
 
 
+}
+
+/* Test case 1006: ContainsContact should tell us whether a contact exists in a list of contacts or not. */
+func Test_1006(t *testing.T) {
+
+	contacts := make([]Contact, 0)
+
+	nrContacts := 10;
+	for i := 0; i < nrContacts; i++ {
+		contacts = append(contacts, NewContact(NewRandomKademliaID(),"localhost:8000"))
+	}
+
+	randIndex := rand.Intn(nrContacts - 1)
+
+	contact1 := contacts[randIndex]
+
+	if ContainsContact(contacts, contact1) == false {
+		t.Error("error in test case 1006")
+	}
 }
 
 

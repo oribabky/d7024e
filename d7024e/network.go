@@ -15,7 +15,7 @@ import (
 }*/
 
 type Network struct {
-	contact *Contact
+	Contact *Contact
 	packetQueue chan *KademliaPacket
 	packetID int32
 	sentPackets []*KademliaPacket
@@ -72,7 +72,7 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 
 		//PING
 		case PingReq:
-			kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingResp)
+			kademliaPacket := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), PingResp)
 			kademliaPacket.PacketID = currentPacket.PacketID;
 			network.SendKademliaPacket(currentPacket.SourceAddress, kademliaPacket)
 
@@ -88,10 +88,13 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 
 		//FIND_NODE
 		case FindNodeReq:
+			//add to routing table
+			rt.AddContact(NewContact(NewKademliaID(currentPacket.SourceID), currentPacket.SourceAddress))
+
 			targetID := NewKademliaID(currentPacket.TargetID)
 			kClosest := rt.FindClosestContacts(targetID, K)
 
-			kademliaPacket := network.CreateKademliaPacket(network.contact.Address, FindNodeResp)
+			kademliaPacket := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), FindNodeResp)
 			kademliaPacket.PacketID = currentPacket.PacketID;
 
 			for i := range kClosest {
@@ -108,6 +111,10 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 		case FindNodeResp:
 			log.Println("Find_node response received from " + 
 				currentPacket.SourceAddress)
+
+						//add to routing table
+			rt.AddContact(NewContact(NewKademliaID(currentPacket.SourceID), currentPacket.SourceAddress))
+
 			//network.MarkReturnedPacket(currentPacket)
 			for i := range currentPacket.Contacts {
 				c := NewContact(NewKademliaID(currentPacket.Contacts[i].ID), currentPacket.Contacts[i].Address)
@@ -160,7 +167,7 @@ func (network *Network) SendKademliaPacket(address string, packet *KademliaPacke
 
 	targetAddr, err := net.ResolveUDPAddr("udp", address)
 	CheckError(err, "targetAddr")
-	/*localAddr, err := net.ResolveUDPAddr("udp", network.contact.Address)
+	/*localAddr, err := net.ResolveUDPAddr("udp", network.Contact.Address)
 	CheckError(err, "localAddr")
 	conn, err := net.DialUDP("udp", localAddr, targetAddr)
 	CheckError(err, "dialUDP") */
@@ -175,7 +182,7 @@ func (network *Network) SendKademliaPacket(address string, packet *KademliaPacke
 
 }
 
-func (network *Network) CreateKademliaPacket(sourceAddress string, procedure string) *KademliaPacket {
+func (network *Network) CreateKademliaPacket(sourceAddress string, sourceID string, procedure string) *KademliaPacket {
 
 	//check that the procedure is one defined by the constants in this file.
 	if procedure != PingReq && procedure != PingResp && procedure != FindNodeReq && procedure != FindNodeResp && procedure != PingSend && procedure != FindNodeSend{
@@ -184,6 +191,7 @@ func (network *Network) CreateKademliaPacket(sourceAddress string, procedure str
 
 	kademliaPacket := KademliaPacket{
 		SourceAddress: sourceAddress,
+		SourceID: sourceID,
 		Procedure: procedure,
 		RandomID: int32(rand.Intn(256)),
 	}
@@ -226,7 +234,7 @@ func (network *Network) AwaitResponse(packetID int32) bool{
 }
 
 func (network *Network) SendPingMessage(address string) bool {
-	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, PingSend)
+	kademliaPacket := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), PingSend)
 
 	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
 	kademliaPacket.DestinationAddress = address;
@@ -237,7 +245,7 @@ func (network *Network) SendPingMessage(address string) bool {
 }
 
 func (network *Network) SendFindNodeMessage(address string, targetID string) {
-	kademliaPacket := network.CreateKademliaPacket(network.contact.Address, FindNodeSend)
+	kademliaPacket := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), FindNodeSend)
 
 
 	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)

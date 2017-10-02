@@ -19,20 +19,36 @@ const K int = 3;
 
 
 
-func (kademlia *Kademlia) LookupContact(target *Contact, k int) {
+func (kademlia *Kademlia) LookupContact(target *Contact, k int) []Contact {
 	//contacts := kademlia.rt.FindClosestContacts(target.ID, intk)
 
 	//selected the alpha closest from our own routing table to the target
 	myKClosest := kademlia.rt.FindClosestContacts(target.ID, k)
 	kClosest := myKClosest;
-	toBeQueried := kClosest[0:Alpha]
+
+	toBeQueried := kClosest
+	if len(kClosest) > Alpha {	//if there are more than alpha entries.
+		toBeQueried = kClosest[0:Alpha]
+	}
+	
 	queriedContacts := make([]Contact, 0)
+	queriedContacts = append(queriedContacts, *kademlia.network.Contact)
 
 	kClosest = kademlia.NodeLookup(toBeQueried, kClosest, queriedContacts, target, k)
+	return kClosest;
 }
 
 func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, queriedContacts []Contact, target *Contact, k int) []Contact {
-
+	//WHITEBOXTEST
+	/*fmt.Println("\nCurrentKClosest:")
+	for i := range kClosest {
+		fmt.Println(kClosest[i].ID.String())
+	} */
+	/*fmt.Println("\nTOBEQUERIED:")
+	for i := range toBeQueried {
+		fmt.Println(toBeQueried[i].Address)
+	}*/
+	
 	//base case
 	if len(toBeQueried) == 0 {
 		return kClosest;
@@ -50,7 +66,7 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, 
 
 	for {
 	    select {
-	        case <-time.After(time.Second * 1):
+	        case <-time.After(time.Millisecond * 1000):
 		    	fmt.Println("timeout!!")
 		    	break;
 
@@ -58,6 +74,12 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, 
 	    	    //check that c is not already in kClosest.
 				if ContainsContact(kClosest, *c) == true {
 					fmt.Println("contact already in kClosest!")
+					continue;
+				}
+
+				//check that c is not the target itself
+				if c.ID.String() == target.ID.String() {
+					fmt.Println("cannot add ourselves!")
 					continue;
 				}
 
@@ -86,7 +108,7 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, 
 		    	    if kClosest[lastIndex].ID.String() != c.ID.String() {
 		    	    	roundSuccessful = true;
 		    	    }
-		    	continue;
+		    		continue;
 				}
 			}
 		break;	//break out of the outer for-loop.
