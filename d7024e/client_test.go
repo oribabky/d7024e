@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 	//"fmt"
-	//"math/rand"
+	"math/rand"
 )
 
 
@@ -249,22 +249,15 @@ func Test_2002(t *testing.T) {
 
 
 	//from any node we should now be able to find the closest nodes to a given target
-	//try to find the closest nodes to server7 from server2
+
 	
-	//create 12 random numbers which we will use as indices
-	/*indexLimit := len(onlineNodes) - 1;
-	randNumbers := make([]int, 0)
-	for i := 0; i < 12; i++ {
-		randNumbers = append(randNumbers, rand.Intn(indexLimit))
-	}
-	nrRandonNumbers := len(randNumbers)
 
 	//chose at random a source node and a target from which we will try to find the kClosest:
-	var randSourceIndex int;
-	var randTargetIndex int;
+	indexLimit := len(onlineNodes) - 1;
+
 	for i := 0; i < 5; i++ {
-		randSourceIndex = rand.Intn(nrRandonNumbers - 1)
-		randTargetIndex = rand.Intn(nrRandonNumbers - 1)
+		randSourceIndex := rand.Intn(indexLimit)
+		randTargetIndex := rand.Intn(indexLimit)
 		chosenSourceNode := onlineNodes[randSourceIndex]
 		chosenTargetNode := onlineNodes[randTargetIndex]
 
@@ -273,14 +266,13 @@ func Test_2002(t *testing.T) {
 
 		for j := range kClosestActual {
 			if kClosestActual[j].ID.String() != kClosestExpected[j].ID.String() {
-				log.Println(i)
 				log.Println("Target: " + chosenTargetNode.Me.Address + "/" + chosenTargetNode.Me.ID.String())
 				log.Println("Actual: " + kClosestActual[j].Address + "/" + kClosestActual[j].ID.String())
 				log.Println("Expected: " + kClosestExpected[j].Address + "/" + kClosestExpected[j].ID.String())
 				t.Error("error in test case 2002.")
 			}
 		}
-	}  */
+	}  
 	/*
 	kClosestActual4 := server1.Kademlia.LookupContact(server4.Me, k, a)
 	kClosest4 = server4.Rt.FindClosestContacts(server4.Me.ID, k)
