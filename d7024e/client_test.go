@@ -237,12 +237,10 @@ func Test_2002(t *testing.T) {
 		kClosestMe := onlineNodes[i].Rt.FindClosestContacts(onlineNodes[i].Me.ID, k)
 
 		for o := range kClosestAll[i] {
-			/* fmt.Println("Actual: " + kClosestAll[i][o].Address)
-			fmt.Println("Expected: " + kClosestMe[o].Address) */
 			if kClosestAll[i][o].ID.String() != kClosestMe[o].ID.String() {
 				log.Println("Actual: " + kClosestAll[i][o].Address)
 				log.Println("Expected: " + kClosestMe[o].Address)
-				t.Error("error in 2002..")
+				t.Error("error in test case 2002.")
 			}
 		}
 
@@ -252,19 +250,19 @@ func Test_2002(t *testing.T) {
 
 
 	//from any node we should now be able to find the closest nodes to a given target
-/*	time.Sleep(time.Millisecond * 2000)
+	//try to find the closest nodes to server7 from server2
 
-
-	kClosestActual8 := server2.Kademlia.LookupContact(server8.Me, k)
-	time.Sleep(time.Millisecond * 2000)
-	fmt.Println("\nactual closest for node: " + server8.Me.Address)
-	for i := range kClosestActual8 {
-		fmt.Println("HEJ " + kClosestActual8[i].Address)
-		if kClosestActual8[i].ID.String() != kClosest8[i].ID.String() {
-			t.Error("error babe.")
+	kClosestActual5 := server2.Kademlia.LookupContact(server5.Me, k, a)
+	time.Sleep(time.Millisecond * 1000)
+	//log.Println("\nactual closest for node: " + server5.Me.Address)
+	for i := range kClosestActual5 {
+		if kClosestActual5[i].ID.String() != kClosest5[i].ID.String() {
+			log.Println("Actual: " + kClosestActual5[i].Address)
+			log.Println("Expected: " + kClosest5[i].Address)
+			t.Error("error in test case 2002.")
 		}
 	}
-	*/
+	
 
 
 
@@ -348,11 +346,11 @@ func Test_2002(t *testing.T) {
 	server2.network.CloseConnection();
 	server3.network.CloseConnection();
 	server4.network.CloseConnection();
-	/*server5.network.CloseConnection();
+	server5.network.CloseConnection();
 	server6.network.CloseConnection();
 	server7.network.CloseConnection();
 	server8.network.CloseConnection();
-	server9.network.CloseConnection(); */
+	server9.network.CloseConnection(); /* */
 
 	time.Sleep(time.Millisecond * 500)
 

@@ -98,7 +98,7 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			kademliaPacket.PacketID = currentPacket.PacketID;
 
 			for i := range kClosest {
-				log.Println(kClosest[i].ID.String())
+				//log.Println(kClosest[i].ID.String())
 				contactPacket := ContactPacket {
 					Address: kClosest[i].Address,
 					ID: kClosest[i].ID.String(),
