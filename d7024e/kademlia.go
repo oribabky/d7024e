@@ -15,7 +15,7 @@ func NewKademlia (rt *RoutingTable, network *Network) Kademlia {
 }
 
 const Alpha int = 2;
-const K int = 3;
+const K int = 5;
 
 
 
@@ -33,9 +33,9 @@ func (kademlia *Kademlia) LookupContact(target *Contact, k int, alpha int) []Con
 	//
 
 	kClosest := myKClosest;
-	if kClosest[0].ID.String() == target.ID.String() {	//if the targetID is in kClosest:
+	/*if kClosest[0].ID.String() == target.ID.String() {	//if the targetID is in kClosest:
 		kClosest = kClosest[1:]
-	}
+	}*/
 
 	toBeQueried := kClosest
 	if len(kClosest) > alpha {	//if there are more than alpha entries.
@@ -56,14 +56,14 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried *[]Contact, kClosest *[]Contact
 	queriedContacts1 := *queriedContacts;
 
 	//WHITEBOXTEST
-	/*log.Println("CurrentKClosest for node " + kademlia.network.Contact.Address +":")
+	log.Println("CurrentKClosest for node " + kademlia.network.Contact.Address +":")
 	for i := range kClosest1 {
 		log.Println(kClosest1[i].Address)
-	} */
+	} 
 
 		log.Println("\nnodes to be queried:")
 	PrintContactList(toBeQueried1)
-
+log.Println("\n")
 	/*log.Println("\nTOBEQUERIED:")
 	for i := range toBeQueried1 {
 		log.Println(toBeQueried1[i].Address)
@@ -83,20 +83,20 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried *[]Contact, kClosest *[]Contact
 	toBeQueried1 = ClearContactSlice(toBeQueried1)
 
 
-	roundSuccessful := false;
+	//roundSuccessful := false;
 
 	for {
 	    select {
-	        case <-time.After(time.Millisecond * 500):
+	        case <-time.After(time.Millisecond * 600):
 		    	log.Println("timeout!!")
 		    	break;
 
 	    	case c := <-kademlia.network.ReturnedContacts:
 
 	    	    //check that c is not already in kClosest1.
-				if ContainsContact(kClosest1, *c) == true {
+				if ContainsContact(kClosest1, c) == true {
 					log.Println("contact" + c.Address + "already in kClosest1!")
-
+					continue;
 				//check that c is not the target itself
 				/*} else if c.ID.String() == target.ID.String() {
 					log.Println("cannot add the target itself!") */
@@ -105,15 +105,18 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried *[]Contact, kClosest *[]Contact
 				} else if len(kClosest1) >= k {  
 		    	    //add the contact to k-closest
 		    	    kClosest1 = InsertContactSortedDistTarget(c, kClosest1, target)
-		    	    log.Println("contact " + c.Address + " was added!")
+		    	    
 		    	    //if at least one contact was not inserted on the last index, means that it was of closer distance than some other
 		    	    //contact in kClosest1 to our target.
 		    	    if kClosest1[k].ID.String() != c.ID.String() {
-		    	    	roundSuccessful = true;
+		    	    	//roundSuccessful = true;
+		    	    	log.Println("contact " + c.Address + " was added!")
 		    	    }
+
+
 		    	    //and strip the list to K items
 		    	    kClosest1 = kClosest1[0:k]
-
+		    	    PrintContactList(kClosest1)
 		    	//if kClosest1 holds less than K items
 				} else if len(kClosest1) < k {
 					
@@ -122,11 +125,11 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried *[]Contact, kClosest *[]Contact
 
 		    	    log.Println("contact " + c.Address + " was added!")
 					lastIndex := len(kClosest1) - 1;	
-
+					PrintContactList(kClosest1)
 		    	    //if at least one contact was not inserted on the last index, means that it was of closer distance than some other
 		    	    //contact in kClosest1 to our target.
 		    	    if kClosest1[lastIndex].ID.String() != c.ID.String() {
-		    	    	roundSuccessful = true;
+		    	    	//roundSuccessful = true;
 		    	    }
 
 				}
@@ -140,15 +143,15 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried *[]Contact, kClosest *[]Contact
 	PrintContactList(kClosest1)
 	log.Println(roundSuccessful) */
 
-	limit := k
-	if roundSuccessful == true {		//pick alpha contacts from kClosest1 that have not yet been queried if the round was successful,
+	limit := alpha
+	/*if roundSuccessful == true {		//pick alpha contacts from kClosest1 that have not yet been queried if the round was successful,
 		limit = alpha                  //otherwise we will pick all from kClosest1 that have not been queried.
-	}
+	}*/
 
 	contactsToQuery := 0
 	for i := range kClosest1 {
 		alreadyQueried := false;
-		currentContact := kClosest1[i];
+		currentContact := &kClosest1[i];
 
 		if contactsToQuery >= limit {
 			break;
@@ -159,7 +162,7 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried *[]Contact, kClosest *[]Contact
 		}
 
 		if alreadyQueried == false{
-			toBeQueried1 = append(toBeQueried1, currentContact)
+			toBeQueried1 = append(toBeQueried1, *currentContact)
 			contactsToQuery ++;
 		}
 		//log.Println(kClosest1[i].Address)
@@ -187,7 +190,7 @@ func (kademlia *Kademlia) Store(data []byte) {
 	// TODO
 }
 
-func ContainsContact(contacts []Contact, contact Contact) bool {
+func ContainsContact(contacts []Contact, contact *Contact) bool {
     for i := range contacts {
         if contact.ID.String() == contacts[i].ID.String() {
             return true
@@ -210,10 +213,10 @@ func InsertContactSortedDistTarget(contact *Contact, list []Contact, target *Con
 		if contact.Less(currentContact) {		//kClosest is sorted on distance to target node.
 			index = i;
 			break;
-		} else if contact.Less(currentContact) == currentContact.Less(contact) {		//if the distance are the same to one another.
+		} /*else if contact.Less(currentContact) == currentContact.Less(contact) {		//if the distance are the same to one another.
 			index = i;
-			break;
-		}
+			break; 
+		}*/
 	}
 
 	s := append(list, list[0])
