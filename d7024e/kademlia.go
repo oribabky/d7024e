@@ -42,7 +42,6 @@ func (kademlia *Kademlia) LookupContact(target *Contact, k int, alpha int) []Con
 	toBeQueried = append(toBeQueried, kClosest...)
 	//toBeQueried := kClosest;
 	if len(kClosest) > alpha {	//if there are more than alpha entries.
-		toBeQueried = kClosest[0:alpha]
 		toBeQueried = append(toBeQueried, kClosest[0:alpha]...)
 	}
 	

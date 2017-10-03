@@ -280,7 +280,7 @@ func Test_2002(t *testing.T) {
 				t.Error("error in test case 2002.")
 			}
 		}
-	} */
+	}  */
 	/*
 	kClosestActual4 := server1.Kademlia.LookupContact(server4.Me, k, a)
 	kClosest4 = server4.Rt.FindClosestContacts(server4.Me.ID, k)
