@@ -201,8 +201,6 @@ func Test_2002(t *testing.T) {
 	//onlineNodes := []*Node{node1, server1, server2, server3, server4, server5, server6, server7, server8, server9}
 	onlineNodes := []*Node{node1, server1, server2, server3, server4}
 	nrOnlineNodes := len(onlineNodes)
-	log.Println(nrOnlineNodes)
-
 
 	//add every node to node1's routing table, and every node should know of node1:
 	for i := range onlineNodes {
@@ -226,7 +224,6 @@ func Test_2002(t *testing.T) {
 	kClosest8 := server8.Kademlia.LookupContact(server8.Me, k, a)
 	kClosest9 := server9.Kademlia.LookupContact(server9.Me, k, a) */
 
-	time.Sleep(time.Millisecond * 500)
 	//kClosestAll := [][]Contact{kClosest0, kClosest1, kClosest2, kClosest3, kClosest4, kClosest5, kClosest6, kClosest7, kClosest8, kClosest9}
 	kClosestAll := [][]Contact{kClosest0, kClosest1, kClosest2, kClosest3, kClosest4}
 
@@ -253,7 +250,7 @@ func Test_2002(t *testing.T) {
 	
 
 	//chose at random a source node and a target from which we will try to find the kClosest:
-	indexLimit := len(onlineNodes) - 1;
+	indexLimit := nrOnlineNodes - 1;
 
 	for i := 0; i < 5; i++ {
 		randSourceIndex := rand.Intn(indexLimit)
@@ -273,96 +270,6 @@ func Test_2002(t *testing.T) {
 			}
 		}
 	}  
-	/*
-	kClosestActual4 := server1.Kademlia.LookupContact(server4.Me, k, a)
-	kClosest4 = server4.Rt.FindClosestContacts(server4.Me.ID, k)
-	//PrintContactList(kClosest4)
-	time.Sleep(time.Millisecond * 500)
-	//log.Println("\nactual closest for node: " + server4.Me.Address)
-	for i := range kClosestActual4 {
-		if kClosestActual4[i].ID.String() != kClosest4[i].ID.String() {
-			log.Println("Target: " + server4.Me.Address + "/" + server4.Me.ID.String())
-			log.Println("Actual: " + kClosestActual4[i].Address + "/" + kClosestActual4[i].ID.String())
-			log.Println("Expected: " + kClosest4[i].Address + "/" + kClosest4[i].ID.String())
-			t.Error("error in test case 2002.")
-		}
-	} */
-	
-
-
-
-/*
-	//connect our nodes to one another through the routing tables. Each node will know of at least 1 other online node.
-	for i := range onlineNodes {
-		nrActiveNodesToAdd := 1;
-		nrActiveNodesToAdd = nrActiveNodesToAdd + rand.Intn(4) 
-
-		//add a certain amount of nodes
-		for k := 0; k < nrActiveNodesToAdd; k++ {
-
-			//find an ok random index of the online nodes 
-			randomIndexOk := false;
-			randomIndex := rand.Intn((nrOnlineNodes - 1))
-			for randomIndexOk == false {
-
-				if randomIndex != i {
-					randomIndexOk = true
-					break;
-				}
-				randomIndex = rand.Intn((nrOnlineNodes - 1))
-			}
-			chosenContact := onlineNodes[randomIndex].Me
-
-			//add the node as a contact in the routing table.
-			onlineNodes[i].Rt.AddContact(*chosenContact)
-		}
-
-
-	} */
-
-/*
-	//our target contact that we want to find k closest contacts to
-	target := NewContact(NewKademliaID("1111111500000000000000000000000000000000"), "localhost:8000")
-
-	//our actual kClosest contacts to the target:
-	k := 3;
-	closest1 := NewContact(NewKademliaID("1111111400000000000000000000000000000000"), "localhost:1337")
-	closest2 := NewContact(NewKademliaID("1111111300000000000000000000000000000000"), "localhost:1338")
-	closest3 := NewContact(NewKademliaID("1111111200000000000000000000000000000000"), "localhost:1339")
-	kClosestExpected := []Contact{closest1, closest2, closest3}
-	nrOnlineNodes = len(onlineNodes)
-	log.Println(rand.Intn(nrOnlineNodes))
-	//add the closest randomly in our online nodes' routing tables.
-	for i := range kClosestExpected {
-		contact := kClosestExpected[i]
-		randomIndex := rand.Intn(nrOnlineNodes - 1)
-		log.Println(randomIndex)
-		onlineNodes[randomIndex].Rt.AddContact(contact)
-	}
-
-	//TEMP print all nodes k-closest.
-	for i := range onlineNodes {
-		currentNode := onlineNodes[i]
-		kClosest := currentNode.Rt.FindClosestContacts(target.ID, 100)
-		log.Println("\nHi I am node " + currentNode.Me.Address + ". This is my routing table:")
-		for k := range kClosest {
-			log.Println(kClosest[k].Address)
-		}
-	}
-
-	//finally, now we should be able to find the kClosest contacts
-	closestToTarget := node1.Kademlia.LookupContact(&target, k)
-
-	
-	for i := range closestToTarget {
-		log.Println("EXPECTED: " + kClosestExpected[i].ID.String())
-		log.Println("ACTUAL " + closestToTarget[i].ID.String())
-		// if closestToTarget[i] != kClosestExpected[i] {
-		//	t.Error("Error testing nodeLookup..")
-		//} 
-	}  
-	*/
-	//time.Sleep(time.Millisecond * 500)
 
 
 
