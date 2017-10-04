@@ -73,7 +73,7 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, 
 	currentKClosest := kClosest
 	for {
 	    select {
-	        case <-time.After(time.Millisecond * 400):
+	        case <-time.After(time.Millisecond * 600):
 		    	log.Println("timeout!!")
 		    	break;
 
@@ -156,8 +156,19 @@ func (kademlia *Kademlia) LookupData(hash string) {
 	// TODO
 }
 
-func (kademlia *Kademlia) Store(data []byte) {
-	// TODO
+func (kademlia *Kademlia) Store(data []byte) *KademliaID{
+	fileToBeAdded := NewFile("", data)
+
+	//find the closest contacts to this dummy-target contact
+	contactDummy := NewContact(fileToBeAdded.Key, "")
+	kClosest := kademlia.LookupContact(&contactDummy)
+	PrintContactList(kClosest)
+	//send them store RPCs
+	for i := range kClosest {
+		kademlia.network.SendStoreMessage(kClosest[i].Address, &fileToBeAdded)
+	}
+
+	return fileToBeAdded.Key;
 }
 
 func ContainsContact(contacts []Contact, contact *Contact) bool {

@@ -20,7 +20,7 @@ type Network struct {
 }
 
 type File struct {
-	key *KademliaID
+	Key *KademliaID
 	data []byte
 }
 
@@ -57,10 +57,10 @@ const FindDataResp string = "findDataResponse"
 const StoreSend string = "storeSend"
 const StoreReq string = "storeRequest"
 
-func (network *Network) FileAlreadyExists(file *File) bool {
+func (network *Network) FileExists(fileKey *KademliaID) bool {
 /* This function checks if a file already is stored here */
 	for i := range network.files {
-		if file.key.String() == network.files[i].key.String() {
+		if fileKey.String() == network.files[i].Key.String() {
 			return true;
 		}
 	}
@@ -84,7 +84,7 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 	for {
 
 		currentPacket := <-network.packetQueue
-		log.Println("handling: " + currentPacket.Procedure + 
+		log.Println("Node " + network.Contact.Address + " handling: " + currentPacket.Procedure + 
 			" from " + currentPacket.SourceAddress)
 
 		switch currentPacket.Procedure {
@@ -117,7 +117,6 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			kademliaPacket.PacketID = currentPacket.PacketID;
 
 			for i := range kClosest {
-				//log.Println(kClosest[i].ID.String())
 				contactPacket := ContactPacket {
 					Address: kClosest[i].Address,
 					ID: kClosest[i].ID.String(),
@@ -147,18 +146,14 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			network.SendKademliaPacket(currentPacket.DestinationAddress, currentPacket)
 
 		case StoreReq:
-			log.Println("store request received from " + 
-				currentPacket.SourceAddress)
 			rt.AddContact(NewContact(NewKademliaID(currentPacket.SourceID), currentPacket.SourceAddress))
 
 			//add the file to the list of files if the file does not already exist here.
 			file := NewFile(currentPacket.File.ID, currentPacket.File.Data)
 			
-			if network.FileAlreadyExists(&file) == false {
-				log.Println(len(network.files))
+			if network.FileExists(file.Key) == false {
 				network.files = append(network.files, &file)
-				log.Println(len(network.files))
-				log.Println("Stored file: " + file.key.String())
+				log.Println("Stored file: " + file.Key.String())
 			}
 
 		case StoreSend:
@@ -308,14 +303,11 @@ func (network *Network) SendStoreMessage(address string, file *File) {
 	//log.Println(file.key.String())
 
 	filePacket := FilePacket {
-		ID: file.key.String(),
+		ID: file.Key.String(),
 		Data: file.data,
 	}
 
 	kademliaPacket.File = &filePacket;
-
-	log.Println("here boi")
-	//kademliaPacket.File.Data = data;
 
 	go network.AddToPacketChannel(kademliaPacket)
 

@@ -59,7 +59,7 @@ func (candidates *ContactCandidates) Less(i, j int) bool {
 
 func PrintContactList(contacts []Contact) {
 	for n := range contacts {
-		log.Println(contacts[n].Address)
+		log.Println("address: " + contacts[n].Address + " ID: " + contacts[n].ID.String())
 	}
 	
 }

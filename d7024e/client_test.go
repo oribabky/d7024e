@@ -108,7 +108,7 @@ func Test_2001(t *testing.T) {
 	//fetch the returned contacts
 	for {
 		select {
-	        case <-time.After(time.Millisecond * 1000):
+	        case <-time.After(time.Millisecond * 2000):
 		    	log.Println("Channel empty.")
 		    	break;
 
@@ -138,6 +138,8 @@ func Test_2001(t *testing.T) {
 		}
 	}
 
+	time.Sleep(time.Millisecond * 500)
+
 
 	//TEST STORE
 	log.Println("\nSTORE")
@@ -149,10 +151,10 @@ func Test_2001(t *testing.T) {
 	node1.network.SendStoreMessage(ServerAddress3, &file)
 	node1.network.SendStoreMessage(OfflineServer, &file)
 
-	time.Sleep(time.Millisecond * 1000)
+	time.Sleep(time.Millisecond * 500)
 
-	if server1.network.FileAlreadyExists(&file) == false || server2.network.FileAlreadyExists(&file) == false || server3.network.FileAlreadyExists(&file) == false {
-		log.Println("file " + file.key.String() + " does not exist in one of the servers")
+	if server1.network.FileExists(file.Key) == false || server2.network.FileExists(file.Key) == false || server3.network.FileExists(file.Key) == false {
+		log.Println("file " + file.Key.String() + " does not exist in one of the servers")
 		t.Error("error in testing RPCs.")
 	}
 
@@ -163,9 +165,8 @@ func Test_2001(t *testing.T) {
 	server3.network.CloseConnection();
 } 
 
-/* Test case 2002: The system should be able to send out kademlia procedures. */
-
-func test_2002(t *testing.T) {
+/* Test case 2002: The sytem should be able to locate k-closest nodes to a given target */
+func Test_2002(t *testing.T) {
 	time.Sleep(time.Millisecond * 500)
 	log.Println("\nTEST Kademlia procedures..")
 
@@ -252,6 +253,7 @@ func test_2002(t *testing.T) {
 
 		for o := range kClosestAll[i] {
 			if kClosestAll[i][o].ID.String() != kClosestMe[o].ID.String() {
+				log.Println("OKEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEJ")
 				log.Println("Actual: " + kClosestAll[i][o].Address)
 				log.Println("Expected: " + kClosestMe[o].Address)
 				t.Error("error in test case 2002.")
@@ -312,3 +314,87 @@ func TestFindNode(t *testing.T) {
 	go node1.NodeUp()
 	go node1.network.SendFindNodeMessage(ServerAddress)
 }*/
+
+/* Test case 2003: The sytem should be store a file in the network at the k-closest contacts to the file hash. */
+func test_2003(t *testing.T) {
+time.Sleep(time.Millisecond * 500)
+		//random node ID's
+		node1 := NewNode("", ClientAddress)
+	server1 := NewNode("", ServerAddress1)
+	server2 := NewNode("", ServerAddress2)
+	server3 := NewNode("", ServerAddress3)
+	server4 := NewNode("", ServerAddress4)
+
+
+	go node1.NodeUp()
+	go server1.NodeUp()
+	go server2.NodeUp()
+	go server3.NodeUp()
+	go server4.NodeUp()
+
+	//Fill up the routing tables
+	onlineNodes := []*Node{node1, server1, server2, server3, server4}
+
+	//add every node to node1's routing table, and every node should know of node1:
+	for i := range onlineNodes {
+		if onlineNodes[i].Me.ID.String() == node1.Me.ID.String() {
+			continue;
+		}
+		node1.Rt.AddContact(*onlineNodes[i].Me)
+		onlineNodes[i].Rt.AddContact(*node1.Me)
+	} 
+
+	node1.Kademlia.LookupContact(node1.Me)
+	server1.Kademlia.LookupContact(server1.Me)
+	server2.Kademlia.LookupContact(server2.Me)
+	server3.Kademlia.LookupContact(server3.Me)
+	server4.Kademlia.LookupContact(server4.Me)
+
+	//store the file in the system
+	fileContents := []byte("asdasdasdasdasd")
+	fileKey := node1.Kademlia.Store(fileContents) 
+	log.Println(fileKey.String())
+
+	//our dummy node will have the same ID as the file-key ID 
+	dummyNode := NewNode(fileKey.String(), ServerAddress5)
+	go dummyNode.NodeUp()
+	dummyNode.Rt.AddContact(*node1.Me)
+	onlineNodes = append(onlineNodes, dummyNode)
+
+	kClosestExpected := dummyNode.Kademlia.LookupContact(dummyNode.Me)
+	PrintContactList(kClosestExpected)
+
+
+	time.Sleep(time.Millisecond * 500)
+	log.Println(len(kClosestExpected))
+
+	for i := range kClosestExpected {
+		log.Println(i)
+		for o := range onlineNodes {
+			if onlineNodes[o].Me.ID.String() == dummyNode.Me.ID.String() {
+				//we havent queried the dummy node to store the file.
+				continue;
+			}
+			if kClosestExpected[i].ID.String() == onlineNodes[o].Me.ID.String() {
+				log.Println(onlineNodes[o].Me.Address)
+				//see that the file is actually stored.
+				if onlineNodes[o].network.FileExists(fileKey) == false {
+					log.Println("Expected place to find file: " + onlineNodes[o].Me.Address)
+					t.Error("error in test case 2003.")
+				} 
+			}
+		}
+
+	} 
+
+
+	time.Sleep(time.Millisecond * 500)
+	//close the connections
+	node1.network.CloseConnection();
+	server1.network.CloseConnection();
+	server2.network.CloseConnection();
+	server3.network.CloseConnection();
+	server4.network.CloseConnection();
+	dummyNode.network.CloseConnection();
+	time.Sleep(time.Millisecond * 500)
+}
