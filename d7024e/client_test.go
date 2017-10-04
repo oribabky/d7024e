@@ -292,7 +292,7 @@ func Test_2002(t *testing.T) {
 	}  
 
 
-
+	
 	node1.network.CloseConnection();
 	server1.network.CloseConnection();
 	server2.network.CloseConnection();
