@@ -8,12 +8,6 @@ import (
 	"time"
 	)
 
-/*type RPC struct {
-	srcAddress string
-	procedure string
-	targetID string
-}*/
-
 type Network struct {
 	Contact *Contact
 	packetQueue chan *KademliaPacket
@@ -22,22 +16,21 @@ type Network struct {
 	mux sync.Mutex
 	connection *net.UDPConn
 	ReturnedContacts chan *Contact
+	files []*File
 }
 
 type File struct {
 	key *KademliaID
-	value string
+	data []byte
 }
 
+func NewFile(id string, data []byte) File{
 
-//protocol for how rpcs should be written as strings
-const PingSend string = "pingSend"
-const PingReq string = "pingRequest"
-const PingResp string = "pingResponse"
-
-const FindNodeReq string = "findNodeRequest"
-const FindNodeResp string = "findNodeResponse"
-const FindNodeSend string = "findNodeSend"
+	if id == "" {
+		return File{NewRandomKademliaID(), data}
+	} 
+	return File{NewKademliaID(id), data}
+}
 
 func NewNetwork(contact *Contact) Network {
 	serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
@@ -45,7 +38,33 @@ func NewNetwork(contact *Contact) Network {
 	connection, err := net.ListenUDP("udp", serverAddr)
 	CheckError(err, "listenError")
 
-	return Network{contact, make(chan *KademliaPacket), 0, make([]*KademliaPacket, 0), sync.Mutex{}, connection, make(chan *Contact)}
+	return Network{contact, make(chan *KademliaPacket), 0, make([]*KademliaPacket, 0), sync.Mutex{}, connection, make(chan *Contact), make([]*File, 0)}
+}
+
+//protocol for how rpcs should be written as strings
+const PingSend string = "pingSend"
+const PingReq string = "pingRequest"
+const PingResp string = "pingResponse"
+
+const FindNodeSend string = "findNodeSend"
+const FindNodeReq string = "findNodeRequest"
+const FindNodeResp string = "findNodeResponse"
+
+const FindDataSend string = "findDataSend"
+const FindDataReq string = "findDataRequest"
+const FindDataResp string = "findDataResponse"
+
+const StoreSend string = "storeSend"
+const StoreReq string = "storeRequest"
+
+func (network *Network) FileAlreadyExists(file *File) bool {
+/* This function checks if a file already is stored here */
+	for i := range network.files {
+		if file.key.String() == network.files[i].key.String() {
+			return true;
+		}
+	}
+	return false;
 }
 
 func (network *Network) ReservePacketID(packet *KademliaPacket) int32 {
@@ -126,6 +145,25 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 		case FindNodeSend:
 			currentPacket.Procedure = FindNodeReq
 			network.SendKademliaPacket(currentPacket.DestinationAddress, currentPacket)
+
+		case StoreReq:
+			log.Println("store request received from " + 
+				currentPacket.SourceAddress)
+			rt.AddContact(NewContact(NewKademliaID(currentPacket.SourceID), currentPacket.SourceAddress))
+
+			//add the file to the list of files if the file does not already exist here.
+			file := NewFile(currentPacket.File.ID, currentPacket.File.Data)
+			
+			if network.FileAlreadyExists(&file) == false {
+				log.Println(len(network.files))
+				network.files = append(network.files, &file)
+				log.Println(len(network.files))
+				log.Println("Stored file: " + file.key.String())
+			}
+
+		case StoreSend:
+			currentPacket.Procedure = StoreReq
+			network.SendKademliaPacket(currentPacket.DestinationAddress, currentPacket)
 		}
 	}
 	
@@ -185,7 +223,7 @@ func (network *Network) SendKademliaPacket(address string, packet *KademliaPacke
 func (network *Network) CreateKademliaPacket(sourceAddress string, sourceID string, procedure string) *KademliaPacket {
 
 	//check that the procedure is one defined by the constants in this file.
-	if procedure != PingReq && procedure != PingResp && procedure != FindNodeReq && procedure != FindNodeResp && procedure != PingSend && procedure != FindNodeSend{
+	if procedure != PingReq && procedure != PingResp && procedure != FindNodeReq && procedure != FindNodeResp && procedure != PingSend && procedure != FindNodeSend && procedure != StoreSend && procedure != StoreReq{
 		log.Println("bad procedure.." + procedure) //NEED ERROR HANDLING
 	}
 
@@ -202,7 +240,6 @@ func (network *Network) MarkReturnedPacket (currentPacket *KademliaPacket) {
 	currentPacket.ReturnedPacket = true;
 	network.sentPackets[currentPacket.PacketID] = currentPacket;
 }
-
 
 func (network *Network) AwaitResponse(packetID int32) bool{
 	/* This function will wait for a response from sending a RPC to a node. */
@@ -261,8 +298,27 @@ func (network *Network) SendFindDataMessage(hash string) {
 	// TODO
 }
 
-func (network *Network) SendStoreMessage(data []byte) {
-	// TODO
+func (network *Network) SendStoreMessage(address string, file *File) {
+	kademliaPacket := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), StoreSend)
+
+	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
+	kademliaPacket.DestinationAddress = address;
+
+	//file := NewFile("", data)
+	//log.Println(file.key.String())
+
+	filePacket := FilePacket {
+		ID: file.key.String(),
+		Data: file.data,
+	}
+
+	kademliaPacket.File = &filePacket;
+
+	log.Println("here boi")
+	//kademliaPacket.File.Data = data;
+
+	go network.AddToPacketChannel(kademliaPacket)
+
 }
 
 func CheckError(err error, message string) {

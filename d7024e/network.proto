@@ -6,6 +6,11 @@ message ContactPacket {
 	string ID = 2;
 }
 
+message FilePacket {
+	string ID = 1;
+	bytes Data = 2;
+}
+
 message KademliaPacket {
 	string SourceAddress = 1;
 	string SourceID = 2;
@@ -16,7 +21,7 @@ message KademliaPacket {
 	int32 PacketID = 7;
 	string TargetID = 8;
 	repeated ContactPacket Contacts = 9; 
-
+	FilePacket File = 10;
 }
 
 

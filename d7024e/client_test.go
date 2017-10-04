@@ -44,7 +44,7 @@ func Test_2001(t *testing.T) {
 	go server2.NodeUp()
 	go server3.NodeUp()
 
-	//test ping
+	//TEST PING
 	log.Println("\nPING")
 
 	if node1.network.SendPingMessage(ServerAddress1) == false {
@@ -62,7 +62,7 @@ func Test_2001(t *testing.T) {
 
 
 
-	//test find_node, should be able to be sent asynchronously.
+	//TEST FIND_NODE, should be able to be sent asynchronously.
 	time.Sleep(time.Millisecond * 500)
 	log.Println("\nFIND_NODE")
 
@@ -138,6 +138,25 @@ func Test_2001(t *testing.T) {
 		}
 	}
 
+
+	//TEST STORE
+	log.Println("\nSTORE")
+
+	fileContents := []byte("asdasdasdasdasd")
+	file := NewFile("", fileContents)
+	node1.network.SendStoreMessage(ServerAddress1, &file)
+	node1.network.SendStoreMessage(ServerAddress2, &file)
+	node1.network.SendStoreMessage(ServerAddress3, &file)
+	node1.network.SendStoreMessage(OfflineServer, &file)
+
+	time.Sleep(time.Millisecond * 1000)
+
+	if server1.network.FileAlreadyExists(&file) == false || server2.network.FileAlreadyExists(&file) == false || server3.network.FileAlreadyExists(&file) == false {
+		log.Println("file " + file.key.String() + " does not exist in one of the servers")
+		t.Error("error in testing RPCs.")
+	}
+
+	time.Sleep(time.Millisecond * 1000)
 	node1.network.CloseConnection();
 	server1.network.CloseConnection();
 	server2.network.CloseConnection();
@@ -146,7 +165,7 @@ func Test_2001(t *testing.T) {
 
 /* Test case 2002: The system should be able to send out kademlia procedures. */
 
-func Test_2002(t *testing.T) {
+func test_2002(t *testing.T) {
 	time.Sleep(time.Millisecond * 500)
 	log.Println("\nTEST Kademlia procedures..")
 
