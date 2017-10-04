@@ -15,7 +15,7 @@ func NewKademlia (rt *RoutingTable, network *Network) Kademlia {
 }
 
 const Alpha int = 2;
-const K int = 3;
+const K int = 2;
 
 
 
@@ -73,7 +73,7 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, 
 	currentKClosest := kClosest
 	for {
 	    select {
-	        case <-time.After(time.Millisecond * 600):
+	        case <-time.After(time.Millisecond * 400):
 		    	log.Println("timeout!!")
 		    	break;
 

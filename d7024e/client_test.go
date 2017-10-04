@@ -149,20 +149,20 @@ func Test_2001(t *testing.T) {
 	node1.network.SendStoreMessage(ServerAddress1, &file)
 	node1.network.SendStoreMessage(ServerAddress2, &file)
 	node1.network.SendStoreMessage(ServerAddress3, &file)
-	node1.network.SendStoreMessage(OfflineServer, &file)
 
 	time.Sleep(time.Millisecond * 500)
 
 	if server1.network.FileExists(file.Key) == false || server2.network.FileExists(file.Key) == false || server3.network.FileExists(file.Key) == false {
 		log.Println("file " + file.Key.String() + " does not exist in one of the servers")
 		t.Error("error in testing RPCs.")
-	}
+	} 
 
-	time.Sleep(time.Millisecond * 1000)
+	time.Sleep(time.Millisecond * 500)
 	node1.network.CloseConnection();
 	server1.network.CloseConnection();
 	server2.network.CloseConnection();
-	server3.network.CloseConnection();
+	server3.network.CloseConnection(); 
+	time.Sleep(time.Millisecond * 500)
 } 
 
 /* Test case 2002: The sytem should be able to locate k-closest nodes to a given target */
@@ -318,7 +318,7 @@ func TestFindNode(t *testing.T) {
 }*/
 
 /* Test case 2003: The sytem should be store a file in the network at the k-closest contacts to the file hash. */
-func test_2003(t *testing.T) {
+func Test_2003(t *testing.T) {
 time.Sleep(time.Millisecond * 500)
 		//random node ID's
 		node1 := NewNode("", ClientAddress)
