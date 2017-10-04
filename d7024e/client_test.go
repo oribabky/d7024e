@@ -292,11 +292,9 @@ func Test_2002(t *testing.T) {
 	}  
 
 
-<<<<<<< HEAD
-	
-=======
+
 	time.Sleep(time.Millisecond * 500)
->>>>>>> 139e43a560e5f4779c0ec5d530c042c6215d5712
+
 	node1.network.CloseConnection();
 	server1.network.CloseConnection();
 	server2.network.CloseConnection();
