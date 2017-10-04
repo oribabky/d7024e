@@ -211,13 +211,12 @@ func Test_2002(t *testing.T) {
 		onlineNodes[i].Rt.AddContact(*node1.Me)
 	} 
 
-	k := K;
-	a := Alpha;
-	kClosest0 := node1.Kademlia.LookupContact(node1.Me, k, a)
-	kClosest1 := server1.Kademlia.LookupContact(server1.Me, k, a)
-	kClosest2 := server2.Kademlia.LookupContact(server2.Me, k, a)
-	kClosest3 := server3.Kademlia.LookupContact(server3.Me, k, a)
-	kClosest4 := server4.Kademlia.LookupContact(server4.Me, k, a)
+
+	kClosest0 := node1.Kademlia.LookupContact(node1.Me)
+	kClosest1 := server1.Kademlia.LookupContact(server1.Me)
+	kClosest2 := server2.Kademlia.LookupContact(server2.Me)
+	kClosest3 := server3.Kademlia.LookupContact(server3.Me)
+	kClosest4 := server4.Kademlia.LookupContact(server4.Me)
 	/*kClosest5 := server5.Kademlia.LookupContact(server5.Me, k, a)
 	kClosest6 := server6.Kademlia.LookupContact(server6.Me, k, a)
 	kClosest7 := server7.Kademlia.LookupContact(server7.Me, k, a)
@@ -230,7 +229,7 @@ func Test_2002(t *testing.T) {
 	for i := range onlineNodes {
 		log.Println("\nI am node " + onlineNodes[i].Me.Address + " and these are my KClosest:")
 
-		kClosestMe := onlineNodes[i].Rt.FindClosestContacts(onlineNodes[i].Me.ID, k)
+		kClosestMe := onlineNodes[i].Rt.FindClosestContacts(onlineNodes[i].Me.ID, K)
 
 		for o := range kClosestAll[i] {
 			if kClosestAll[i][o].ID.String() != kClosestMe[o].ID.String() {
@@ -258,8 +257,8 @@ func Test_2002(t *testing.T) {
 		chosenSourceNode := onlineNodes[randSourceIndex]
 		chosenTargetNode := onlineNodes[randTargetIndex]
 
-		kClosestActual := chosenSourceNode.Kademlia.LookupContact(chosenTargetNode.Me, k, a)
-		kClosestExpected := chosenTargetNode.Rt.FindClosestContacts(chosenTargetNode.Me.ID, k)
+		kClosestActual := chosenSourceNode.Kademlia.LookupContact(chosenTargetNode.Me)
+		kClosestExpected := chosenTargetNode.Rt.FindClosestContacts(chosenTargetNode.Me.ID, K)
 
 		for j := range kClosestActual {
 			if kClosestActual[j].ID.String() != kClosestExpected[j].ID.String() {
