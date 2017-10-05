@@ -6,6 +6,7 @@ import (
 	"net"
 	"sync"
 	"time"
+	"errors"
 	)
 
 type Network struct {
@@ -17,11 +18,12 @@ type Network struct {
 	connection *net.UDPConn
 	ReturnedContacts chan *Contact
 	files []*File
+	ReturnedFiles chan *File
 }
 
 type File struct {
 	Key *KademliaID
-	data []byte
+	Data []byte
 }
 
 func NewFile(id string, data []byte) File{
@@ -38,7 +40,7 @@ func NewNetwork(contact *Contact) Network {
 	connection, err := net.ListenUDP("udp", serverAddr)
 	CheckError(err, "listenError")
 
-	return Network{contact, make(chan *KademliaPacket), 0, make([]*KademliaPacket, 0), sync.Mutex{}, connection, make(chan *Contact), make([]*File, 0)}
+	return Network{contact, make(chan *KademliaPacket), 0, make([]*KademliaPacket, 0), sync.Mutex{}, connection, make(chan *Contact), make([]*File, 0), make(chan *File, 1)}
 }
 
 //protocol for how rpcs should be written as strings
@@ -91,7 +93,9 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 
 		//PING
 		case PingReq:
-			kademliaPacket := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), PingResp)
+			kademliaPacket, err := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), PingResp)
+			CheckError(err, "Error with pingreq")
+
 			kademliaPacket.PacketID = currentPacket.PacketID;
 			network.SendKademliaPacket(currentPacket.SourceAddress, kademliaPacket)
 
@@ -113,7 +117,9 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			targetID := NewKademliaID(currentPacket.TargetID)
 			kClosest := rt.FindClosestContacts(targetID, K)
 
-			kademliaPacket := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), FindNodeResp)
+			kademliaPacket, err := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), FindNodeResp)
+			CheckError(err, "Error with find node req")
+
 			kademliaPacket.PacketID = currentPacket.PacketID;
 
 			for i := range kClosest {
@@ -145,6 +151,75 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			currentPacket.Procedure = FindNodeReq
 			network.SendKademliaPacket(currentPacket.DestinationAddress, currentPacket)
 
+
+		//FIND_DATA
+		case FindDataReq:
+			//add to routing table
+			rt.AddContact(NewContact(NewKademliaID(currentPacket.SourceID), currentPacket.SourceAddress))
+
+			targetID := NewKademliaID(currentPacket.TargetID)
+			kClosest := rt.FindClosestContacts(targetID, K)
+
+			kademliaPacket, err := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), FindDataResp)
+			CheckError(err, "Error with find data req")
+			kademliaPacket.PacketID = currentPacket.PacketID;
+
+			//if the file doesnt exist here, return k-closest contacts to the target ID
+			if network.FileExists(targetID) == false {
+				for i := range kClosest {
+					contactPacket := ContactPacket {
+						Address: kClosest[i].Address,
+						ID: kClosest[i].ID.String(),
+					}
+					kademliaPacket.Contacts = append(kademliaPacket.Contacts, &contactPacket)
+				} 
+			} else {
+				//return the file
+				data := make([]byte, 0)
+
+				for i := range network.files {
+					if network.files[i].Key.String() == targetID.String() {
+						data = append(data, network.files[i].Data...)
+					}
+				}
+				filePacket := FilePacket {
+					ID: targetID.String(),
+					Data: data,
+				}
+				kademliaPacket.File = &filePacket;
+			}
+
+
+			network.SendKademliaPacket(currentPacket.SourceAddress, kademliaPacket)
+
+		case FindDataResp:
+			log.Println("Find_data response received from " + 
+				currentPacket.SourceAddress)
+
+			//add to routing table
+			rt.AddContact(NewContact(NewKademliaID(currentPacket.SourceID), currentPacket.SourceAddress))
+
+			//if a file has been returned:
+			if currentPacket.File.ID != "" {
+				log.Println("File retrieved!: " + currentPacket.File.ID)
+				file := NewFile(currentPacket.File.ID, currentPacket.File.Data)
+				go network.AddToFileChannel(&file)
+			} else {
+			//if no file was returned, we will return the closest contacts to the key that was returned.
+				for i := range currentPacket.Contacts {
+					c := NewContact(NewKademliaID(currentPacket.Contacts[i].ID), currentPacket.Contacts[i].Address)
+					go network.AddToContactChannel(&c);
+				}
+			}
+			//network.MarkReturnedPacket(currentPacket)
+
+		case FindDataSend:
+			currentPacket.Procedure = FindDataReq
+			network.SendKademliaPacket(currentPacket.DestinationAddress, currentPacket)
+
+
+
+		//STORE
 		case StoreReq:
 			rt.AddContact(NewContact(NewKademliaID(currentPacket.SourceID), currentPacket.SourceAddress))
 
@@ -153,7 +228,7 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			
 			if network.FileExists(file.Key) == false {
 				network.files = append(network.files, &file)
-				log.Println("Stored file: " + file.Key.String())
+				log.Println("Stored file: " + file.Key.String() + " data: " + string(file.Data))
 			}
 
 		case StoreSend:
@@ -195,6 +270,10 @@ func (network *Network) AddToContactChannel(contact *Contact) {
 	network.ReturnedContacts <- contact;
 }
 
+func (network *Network) AddToFileChannel(file *File) {
+	network.ReturnedFiles <- file;
+}
+
 func (network *Network) SendKademliaPacket(address string, packet *KademliaPacket) {
 	/* establish a connection to the target server. */
 
@@ -215,11 +294,11 @@ func (network *Network) SendKademliaPacket(address string, packet *KademliaPacke
 
 }
 
-func (network *Network) CreateKademliaPacket(sourceAddress string, sourceID string, procedure string) *KademliaPacket {
+func (network *Network) CreateKademliaPacket(sourceAddress string, sourceID string, procedure string) (packet *KademliaPacket, err error) {
 
 	//check that the procedure is one defined by the constants in this file.
-	if procedure != PingReq && procedure != PingResp && procedure != FindNodeReq && procedure != FindNodeResp && procedure != PingSend && procedure != FindNodeSend && procedure != StoreSend && procedure != StoreReq{
-		log.Println("bad procedure.." + procedure) //NEED ERROR HANDLING
+	if procedure != PingReq && procedure != PingResp && procedure != FindNodeReq && procedure != FindNodeResp && procedure != PingSend && procedure != FindNodeSend && procedure != StoreSend && procedure != StoreReq && procedure != FindDataSend && procedure != FindDataReq && procedure != FindDataResp{
+		return nil, errors.New(" Bad procedure...")
 	}
 
 	kademliaPacket := KademliaPacket{
@@ -228,7 +307,7 @@ func (network *Network) CreateKademliaPacket(sourceAddress string, sourceID stri
 		Procedure: procedure,
 		RandomID: int32(rand.Intn(256)),
 	}
-	return &kademliaPacket
+	return &kademliaPacket, nil
 }
 
 func (network *Network) MarkReturnedPacket (currentPacket *KademliaPacket) {
@@ -266,7 +345,8 @@ func (network *Network) AwaitResponse(packetID int32) bool{
 }
 
 func (network *Network) SendPingMessage(address string) bool {
-	kademliaPacket := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), PingSend)
+	kademliaPacket, err := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), PingSend)
+	CheckError(err, "ping failed")
 
 	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
 	kademliaPacket.DestinationAddress = address;
@@ -277,8 +357,8 @@ func (network *Network) SendPingMessage(address string) bool {
 }
 
 func (network *Network) SendFindNodeMessage(address string, targetID string) {
-	kademliaPacket := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), FindNodeSend)
-
+	kademliaPacket, err := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), FindNodeSend)
+	CheckError(err, "find_node failed")
 
 	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
 	kademliaPacket.TargetID = targetID;
@@ -289,13 +369,20 @@ func (network *Network) SendFindNodeMessage(address string, targetID string) {
 	//network.AwaitResponse(kademliaPacket.PacketID)
 }
 
-func (network *Network) SendFindDataMessage(hash string) {
-	// TODO
+func (network *Network) SendFindDataMessage(address string, keyID string) {
+	kademliaPacket, err := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), FindDataSend)
+	CheckError(err, "find_data failed")
+
+	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
+	kademliaPacket.TargetID = keyID;
+
+	kademliaPacket.DestinationAddress = address;
+	go network.AddToPacketChannel(kademliaPacket)
 }
 
 func (network *Network) SendStoreMessage(address string, file *File) {
-	kademliaPacket := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), StoreSend)
-
+	kademliaPacket, err := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), StoreSend)
+	CheckError(err, "store failed")
 	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
 	kademliaPacket.DestinationAddress = address;
 
@@ -304,7 +391,7 @@ func (network *Network) SendStoreMessage(address string, file *File) {
 
 	filePacket := FilePacket {
 		ID: file.Key.String(),
-		Data: file.data,
+		Data: file.Data,
 	}
 
 	kademliaPacket.File = &filePacket;

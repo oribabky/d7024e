@@ -158,6 +158,38 @@ func Test_2001(t *testing.T) {
 	} 
 
 	time.Sleep(time.Millisecond * 500)
+
+
+	//TEST FIND_VALUE
+	go node1.network.SendFindDataMessage(ServerAddress1, file.Key.String())
+	go node1.network.SendFindDataMessage(ServerAddress2, file.Key.String())
+	go node1.network.SendFindDataMessage(ServerAddress3, file.Key.String())
+
+
+	returnedFileID := "";
+	returnedFileData := "";
+	for {
+		select {
+	        case <-time.After(time.Millisecond * 1000):
+		    	log.Println("Channel empty.")
+		    	break;
+
+	    	case file := <-node1.network.ReturnedFiles:
+	    		log.Println("extracting file: " + file.Key.String())
+	    		log.Println("contents: " + string(file.Data)	)
+	    		returnedFileID = file.Key.String();
+	    		returnedFileData = string(file.Data)
+	    		break;
+	    	}
+	    break;
+	}
+
+	if returnedFileID == "" || returnedFileData == "" {
+		t.Error("error in testing RPCs.")
+	}
+
+
+	time.Sleep(time.Millisecond * 500)
 	node1.network.CloseConnection();
 	server1.network.CloseConnection();
 	server2.network.CloseConnection();
