@@ -15,7 +15,7 @@ func NewKademlia (rt *RoutingTable, network *Network) Kademlia {
 }
 
 const Alpha int = 2;
-const K int = 2;
+const K int = 3;
 
 
 
@@ -185,13 +185,14 @@ func InsertContactSortedDistTarget(contact *Contact, list []Contact, target *Con
 
 	//find the right index
 	index := len(list)	//initialize it as the last index.
-	contact.CalcDistance(target.ID)
+	distanceNewContact := contact.ID.CalcDistance(target.ID)
 
 	for i := range list {
 		currentContact := &list[i]
-		currentContact.CalcDistance(target.ID)
+		distanceCurrentContact := currentContact.ID.CalcDistance(target.ID)
+		//currentContact.CalcDistance(target.ID)
 
-		if contact.Less(currentContact) {		//kClosest is sorted on distance to target node.
+		if distanceNewContact.Less(distanceCurrentContact) {		//kClosest is sorted on distance to target node.
 			index = i;
 			break;
 		} 
