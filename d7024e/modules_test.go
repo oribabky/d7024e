@@ -194,7 +194,7 @@ func Test_1005(t *testing.T) {
 
 	//adding node1 should place it in the end:
 	expected := []Contact{node5, node4, node3, node2, node1}
-	contacts = InsertContactSortedDistTarget(&node1, contacts, &target)
+	contacts = InsertContactSortedDistTarget(&node1, contacts, target.ID)
 
 	for i := range expected {
 		if expected[i].ID.String() != contacts[i].ID.String() {
@@ -206,7 +206,7 @@ func Test_1005(t *testing.T) {
 	expected = []Contact{node5, node4, node3, node2}
 	contacts = []Contact{node4, node3, node2}
 
-	contacts = InsertContactSortedDistTarget(&node5, contacts, &target)
+	contacts = InsertContactSortedDistTarget(&node5, contacts, target.ID)
 
 	for i := range expected {
 		if expected[i].ID.String() != contacts[i].ID.String() {
@@ -218,7 +218,7 @@ func Test_1005(t *testing.T) {
 	expected = []Contact{node5, node4, node3, node2, node1}
 	contacts = []Contact{node5, node4, node2, node1}
 
-	contacts = InsertContactSortedDistTarget(&node3, contacts, &target)
+	contacts = InsertContactSortedDistTarget(&node3, contacts, target.ID)
 
 	for i := range expected {
 		if expected[i].ID.String() != contacts[i].ID.String() {

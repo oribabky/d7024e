@@ -265,11 +265,11 @@ func Test_2002(t *testing.T) {
 	} 
 
 
-	kClosest0 := node1.Kademlia.LookupContact(node1.Me)
-	kClosest1 := server1.Kademlia.LookupContact(server1.Me)
-	kClosest2 := server2.Kademlia.LookupContact(server2.Me)
-	kClosest3 := server3.Kademlia.LookupContact(server3.Me)
-	kClosest4 := server4.Kademlia.LookupContact(server4.Me)
+	kClosest0 := node1.Kademlia.LookupContact(node1.Me.ID)
+	kClosest1 := server1.Kademlia.LookupContact(server1.Me.ID)
+	kClosest2 := server2.Kademlia.LookupContact(server2.Me.ID)
+	kClosest3 := server3.Kademlia.LookupContact(server3.Me.ID)
+	kClosest4 := server4.Kademlia.LookupContact(server4.Me.ID)
 	/*kClosest5 := server5.Kademlia.LookupContact(server5.Me, k, a)
 	kClosest6 := server6.Kademlia.LookupContact(server6.Me, k, a)
 	kClosest7 := server7.Kademlia.LookupContact(server7.Me, k, a)
@@ -311,7 +311,7 @@ func Test_2002(t *testing.T) {
 		chosenSourceNode := onlineNodes[randSourceIndex]
 		chosenTargetNode := onlineNodes[randTargetIndex]
 
-		kClosestActual := chosenSourceNode.Kademlia.LookupContact(chosenTargetNode.Me)
+		kClosestActual := chosenSourceNode.Kademlia.LookupContact(chosenTargetNode.Me.ID)
 		kClosestExpected := chosenTargetNode.Rt.FindClosestContacts(chosenTargetNode.Me.ID, K)
 
 		for j := range kClosestActual {
@@ -379,11 +379,11 @@ time.Sleep(time.Millisecond * 500)
 		onlineNodes[i].Rt.AddContact(*node1.Me)
 	} 
 
-	node1.Kademlia.LookupContact(node1.Me)
-	server1.Kademlia.LookupContact(server1.Me)
-	server2.Kademlia.LookupContact(server2.Me)
-	server3.Kademlia.LookupContact(server3.Me)
-	server4.Kademlia.LookupContact(server4.Me)
+	node1.Kademlia.LookupContact(node1.Me.ID)
+	server1.Kademlia.LookupContact(server1.Me.ID)
+	server2.Kademlia.LookupContact(server2.Me.ID)
+	server3.Kademlia.LookupContact(server3.Me.ID)
+	server4.Kademlia.LookupContact(server4.Me.ID)
 
 	//store the file in the system
 	fileContents := []byte("asdasdasdasdasd")
@@ -396,7 +396,7 @@ time.Sleep(time.Millisecond * 500)
 	dummyNode.Rt.AddContact(*node1.Me)
 	onlineNodes = append(onlineNodes, dummyNode)
 
-	kClosestExpected := dummyNode.Kademlia.LookupContact(dummyNode.Me)
+	kClosestExpected := dummyNode.Kademlia.LookupContact(dummyNode.Me.ID)
 	PrintContactList(kClosestExpected)
 
 

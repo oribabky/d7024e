@@ -18,7 +18,7 @@ type Network struct {
 	connection *net.UDPConn
 	ReturnedContacts chan *Contact
 	files []*File
-	ReturnedFiles chan *File
+	ReturnedPacketFiles chan *filePacket   //JOBBA PÅ HÄR!!!!
 }
 
 type File struct {

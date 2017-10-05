@@ -9,6 +9,7 @@ message ContactPacket {
 message FilePacket {
 	string ID = 1;
 	bytes Data = 2;
+	string SourceNodeID = 3;
 }
 
 message KademliaPacket {
