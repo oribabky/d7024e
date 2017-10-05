@@ -161,6 +161,7 @@ func Test_2001(t *testing.T) {
 
 
 	//TEST FIND_VALUE
+	log.Println("\nFIND_VALUE")
 	go node1.network.SendFindDataMessage(ServerAddress1, file.Key.String())
 	go node1.network.SendFindDataMessage(ServerAddress2, file.Key.String())
 	go node1.network.SendFindDataMessage(ServerAddress3, file.Key.String())
@@ -400,17 +401,14 @@ time.Sleep(time.Millisecond * 500)
 
 
 	time.Sleep(time.Millisecond * 500)
-	log.Println(len(kClosestExpected))
 
 	for i := range kClosestExpected {
-		log.Println(i)
 		for o := range onlineNodes {
 			if onlineNodes[o].Me.ID.String() == dummyNode.Me.ID.String() {
 				//we havent queried the dummy node to store the file.
 				continue;
 			}
 			if kClosestExpected[i].ID.String() == onlineNodes[o].Me.ID.String() {
-				log.Println(onlineNodes[o].Me.Address)
 				//see that the file is actually stored.
 				if onlineNodes[o].network.FileExists(fileKey) == false {
 					log.Println("Expected place to find file: " + onlineNodes[o].Me.Address)
