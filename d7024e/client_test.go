@@ -68,12 +68,6 @@ func Test_2001(t *testing.T) {
 
 	target := NewContact(NewRandomKademliaID(), "localhost:8000")
 
-	//add 20 random contacts to each node
-	for i := 0; i < 20; i++ {
-		server1.Rt.AddContact(NewContact(NewRandomKademliaID(), "localhost:8000"))
-		server2.Rt.AddContact(NewContact(NewRandomKademliaID(), "localhost:8000"))
-		server3.Rt.AddContact(NewContact(NewRandomKademliaID(), "localhost:8000"))
-	}
 	
 	//we also need to expect that node1 will be in their routing tables because we send requests to them from node1
 	server1.Rt.AddContact(*node1.Me)
@@ -82,7 +76,6 @@ func Test_2001(t *testing.T) {
 	node1.Rt.AddContact(*server1.Me)
 	node1.Rt.AddContact(*server2.Me)
 	node1.Rt.AddContact(*server3.Me) 
-
 
 
 	//send out the find_node rpcs asynchronously
@@ -95,7 +88,7 @@ func Test_2001(t *testing.T) {
 	
 	//fetch the actual returned contacts
 	kClosestTotalActual := make([]Contact, 0)
-	
+
 	for {
 		select {
 	        case <-time.After(time.Millisecond * 2000):
@@ -123,13 +116,6 @@ func Test_2001(t *testing.T) {
 	kClosestTotalExpected = append(kClosestTotalExpected, kClosestExpected3...)
 
 
-
-
-	
-
-
-	
-
 	//check that the size is the same of both slices
 	if len(kClosestTotalActual) != len(kClosestTotalExpected) {
 		log.Println(len(kClosestTotalActual))
@@ -140,9 +126,7 @@ func Test_2001(t *testing.T) {
 	//check that the contents are the same. That is, check that the returned contacts match the kClosestTotal:
 	 for i := range kClosestTotalExpected {
 		currentContact := kClosestTotalExpected[i]
-
 		foundMatch := ContainsContact(kClosestTotalActual, &currentContact)
-
 		if foundMatch == false {
 			t.Error("error in testing RPCs.")
 		}
@@ -209,7 +193,7 @@ func Test_2001(t *testing.T) {
 } 
 
 /* Test case 2002: The sytem should be able to locate k-closest nodes to a given target */
-func test_2002(t *testing.T) {
+func Test_2002(t *testing.T) {
 	time.Sleep(time.Millisecond * 500)
 	log.Println("\nTEST Kademlia procedures..")
 
@@ -359,7 +343,7 @@ func TestFindNode(t *testing.T) {
 }*/
 
 /* Test case 2003: The sytem should be store a file in the network at the k-closest contacts to the file hash. */
-func test_2003(t *testing.T) {
+func Test_2003(t *testing.T) {
 time.Sleep(time.Millisecond * 500)
 		//random node ID's
 		node1 := NewNode("", ClientAddress)
