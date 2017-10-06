@@ -28,4 +28,5 @@ message KademliaPacket {
 
 
 //protoc --go_out=. *.proto
-//set PATH=%PATH%;C:\xampp\php
+//set PATH=%PATH%;C:\Users\Tobias\go\bin
+//set PATH=%PATH%;E:\Programmering\protobuf\bin

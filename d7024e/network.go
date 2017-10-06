@@ -18,7 +18,7 @@ type Network struct {
 	connection *net.UDPConn
 	ReturnedContacts chan *Contact
 	files []*File
-	ReturnedPacketFiles chan *filePacket   //JOBBA PÅ HÄR!!!!
+	ReturnedPacketFiles chan *FilePacket  
 }
 
 type File struct {
@@ -40,7 +40,7 @@ func NewNetwork(contact *Contact) Network {
 	connection, err := net.ListenUDP("udp", serverAddr)
 	CheckError(err, "listenError")
 
-	return Network{contact, make(chan *KademliaPacket), 0, make([]*KademliaPacket, 0), sync.Mutex{}, connection, make(chan *Contact), make([]*File, 0), make(chan *File, 1)}
+	return Network{contact, make(chan *KademliaPacket), 0, make([]*KademliaPacket, 0), sync.Mutex{}, connection, make(chan *Contact), make([]*File, 0), make(chan *FilePacket, 1)}
 }
 
 //protocol for how rpcs should be written as strings
@@ -185,6 +185,7 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 				filePacket := FilePacket {
 					ID: targetID.String(),
 					Data: data,
+					SourceNodeID: network.Contact.ID.String(),
 				}
 				kademliaPacket.File = &filePacket;
 			}
@@ -202,8 +203,8 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			//if a file has been returned:
 			if currentPacket.File.ID != "" {
 				log.Println("File retrieved!: " + currentPacket.File.ID)
-				file := NewFile(currentPacket.File.ID, currentPacket.File.Data)
-				go network.AddToFileChannel(&file)
+				//file := NewFile(currentPacket.File.ID, currentPacket.File.Data)
+				go network.AddToFilePacketChannel(currentPacket.File)
 			} else {
 			//if no file was returned, we will return the closest contacts to the key that was returned.
 				for i := range currentPacket.Contacts {
@@ -270,8 +271,8 @@ func (network *Network) AddToContactChannel(contact *Contact) {
 	network.ReturnedContacts <- contact;
 }
 
-func (network *Network) AddToFileChannel(file *File) {
-	network.ReturnedFiles <- file;
+func (network *Network) AddToFilePacketChannel(filePacket *FilePacket) {
+	network.ReturnedPacketFiles <- filePacket;
 }
 
 func (network *Network) SendKademliaPacket(address string, packet *KademliaPacket) {
@@ -279,10 +280,6 @@ func (network *Network) SendKademliaPacket(address string, packet *KademliaPacke
 
 	targetAddr, err := net.ResolveUDPAddr("udp", address)
 	CheckError(err, "targetAddr")
-	/*localAddr, err := net.ResolveUDPAddr("udp", network.Contact.Address)
-	CheckError(err, "localAddr")
-	conn, err := net.DialUDP("udp", localAddr, targetAddr)
-	CheckError(err, "dialUDP") */
 
 	data, err := proto.Marshal(packet)
 	CheckError(err, "Couldn't marshal the message")

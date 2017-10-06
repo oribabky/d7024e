@@ -83,17 +83,7 @@ func Test_2001(t *testing.T) {
 	node1.Rt.AddContact(*server2.Me)
 	node1.Rt.AddContact(*server3.Me) 
 
-	//fetch kClosest for each node to the target ID
-	kClosestExpected1 := server1.Rt.FindClosestContacts(target.ID, K)
-	kClosestExpected2 := server2.Rt.FindClosestContacts(target.ID, K)
-	kClosestExpected3 := server3.Rt.FindClosestContacts(target.ID, K)
 
-	kClosestTotalExpected := kClosestExpected1
-	kClosestTotalExpected = append(kClosestTotalExpected, kClosestExpected2...)
-	kClosestTotalExpected = append(kClosestTotalExpected, kClosestExpected3...)
-	kClosestTotalExpected = append(kClosestTotalExpected, kClosestExpected1...)
-	kClosestTotalExpected = append(kClosestTotalExpected, kClosestExpected2...)
-	kClosestTotalExpected = append(kClosestTotalExpected, kClosestExpected3...)
 
 	//send out the find_node rpcs asynchronously
 	go node1.network.SendFindNodeMessage(ServerAddress1, target.ID.String())
@@ -102,10 +92,10 @@ func Test_2001(t *testing.T) {
 	go node1.network.SendFindNodeMessage(ServerAddress1, target.ID.String())
 	go node1.network.SendFindNodeMessage(ServerAddress2, target.ID.String())
 	go node1.network.SendFindNodeMessage(ServerAddress3, target.ID.String())
-
-
+	
+	//fetch the actual returned contacts
 	kClosestTotalActual := make([]Contact, 0)
-	//fetch the returned contacts
+	
 	for {
 		select {
 	        case <-time.After(time.Millisecond * 2000):
@@ -118,6 +108,26 @@ func Test_2001(t *testing.T) {
 	    	}
 	    break;
 	}
+
+	//fetch kClosest for each node to the target ID
+	kClosestExpected1 := server1.Rt.FindClosestContacts(target.ID, K)
+	kClosestExpected2 := server2.Rt.FindClosestContacts(target.ID, K)
+	kClosestExpected3 := server3.Rt.FindClosestContacts(target.ID, K)
+
+	kClosestTotalExpected := make([]Contact, 0)
+	kClosestTotalExpected = append(kClosestTotalExpected, kClosestExpected1...)
+	kClosestTotalExpected = append(kClosestTotalExpected, kClosestExpected2...)
+	kClosestTotalExpected = append(kClosestTotalExpected, kClosestExpected3...)
+	kClosestTotalExpected = append(kClosestTotalExpected, kClosestExpected1...)
+	kClosestTotalExpected = append(kClosestTotalExpected, kClosestExpected2...)
+	kClosestTotalExpected = append(kClosestTotalExpected, kClosestExpected3...)
+
+
+
+
+	
+
+
 	
 
 	//check that the size is the same of both slices
@@ -128,15 +138,15 @@ func Test_2001(t *testing.T) {
 	}
 
 	//check that the contents are the same. That is, check that the returned contacts match the kClosestTotal:
-	for i := range kClosestTotalExpected {
-		currentContact := &kClosestTotalExpected[i]
+	 for i := range kClosestTotalExpected {
+		currentContact := kClosestTotalExpected[i]
 
-		foundMatch := ContainsContact(kClosestTotalActual, currentContact)
+		foundMatch := ContainsContact(kClosestTotalActual, &currentContact)
 
 		if foundMatch == false {
 			t.Error("error in testing RPCs.")
 		}
-	}
+	} 
 
 	time.Sleep(time.Millisecond * 500)
 
@@ -175,10 +185,10 @@ func Test_2001(t *testing.T) {
 		    	log.Println("Channel empty.")
 		    	break;
 
-	    	case file := <-node1.network.ReturnedFiles:
-	    		log.Println("extracting file: " + file.Key.String())
+	    	case filePacket := <-node1.network.ReturnedPacketFiles:
+	    		log.Println("extracting file: " + filePacket.ID)
 	    		log.Println("contents: " + string(file.Data)	)
-	    		returnedFileID = file.Key.String();
+	    		returnedFileID = filePacket.ID;
 	    		returnedFileData = string(file.Data)
 	    		break;
 	    	}
@@ -199,7 +209,7 @@ func Test_2001(t *testing.T) {
 } 
 
 /* Test case 2002: The sytem should be able to locate k-closest nodes to a given target */
-func Test_2002(t *testing.T) {
+func test_2002(t *testing.T) {
 	time.Sleep(time.Millisecond * 500)
 	log.Println("\nTEST Kademlia procedures..")
 
@@ -220,11 +230,11 @@ func Test_2002(t *testing.T) {
 	server2 := NewNode("", ServerAddress2)
 	server3 := NewNode("", ServerAddress3)
 	server4 := NewNode("", ServerAddress4)
-	/*server5 := NewNode("", ServerAddress5)
+	server5 := NewNode("", ServerAddress5)
 	server6 := NewNode("", ServerAddress6)
 	server7 := NewNode("", ServerAddress7)
 	server8 := NewNode("", ServerAddress8)
-	server9 := NewNode("", ServerAddress9) */
+	server9 := NewNode("", ServerAddress9) 
 
 	/*node1 := NewNode(node1ID, ClientAddress)
 	server1 := NewNode(server1ID, ServerAddress1)
@@ -242,17 +252,17 @@ func Test_2002(t *testing.T) {
 	go server2.NodeUp()
 	go server3.NodeUp()
 	go server4.NodeUp()
-	/*go server5.NodeUp()
+	go server5.NodeUp()
 	go server6.NodeUp()
 	go server7.NodeUp()
 	go server8.NodeUp()
-	go server9.NodeUp()  */
+	go server9.NodeUp()  
 
 	//test nodeLookup
 	log.Println("\nNODE LOOKUP")
 
-	//onlineNodes := []*Node{node1, server1, server2, server3, server4, server5, server6, server7, server8, server9}
-	onlineNodes := []*Node{node1, server1, server2, server3, server4}
+	onlineNodes := []*Node{node1, server1, server2, server3, server4, server5, server6, server7, server8, server9}
+	//onlineNodes := []*Node{node1, server1, server2, server3, server4}
 	nrOnlineNodes := len(onlineNodes)
 
 	//add every node to node1's routing table, and every node should know of node1:
@@ -270,14 +280,14 @@ func Test_2002(t *testing.T) {
 	kClosest2 := server2.Kademlia.LookupContact(server2.Me.ID)
 	kClosest3 := server3.Kademlia.LookupContact(server3.Me.ID)
 	kClosest4 := server4.Kademlia.LookupContact(server4.Me.ID)
-	/*kClosest5 := server5.Kademlia.LookupContact(server5.Me, k, a)
-	kClosest6 := server6.Kademlia.LookupContact(server6.Me, k, a)
-	kClosest7 := server7.Kademlia.LookupContact(server7.Me, k, a)
-	kClosest8 := server8.Kademlia.LookupContact(server8.Me, k, a)
-	kClosest9 := server9.Kademlia.LookupContact(server9.Me, k, a) */
+	kClosest5 := server5.Kademlia.LookupContact(server5.Me.ID)
+	kClosest6 := server6.Kademlia.LookupContact(server6.Me.ID)
+	kClosest7 := server7.Kademlia.LookupContact(server7.Me.ID)
+	kClosest8 := server8.Kademlia.LookupContact(server8.Me.ID)
+	kClosest9 := server9.Kademlia.LookupContact(server9.Me.ID) 
 
-	//kClosestAll := [][]Contact{kClosest0, kClosest1, kClosest2, kClosest3, kClosest4, kClosest5, kClosest6, kClosest7, kClosest8, kClosest9}
-	kClosestAll := [][]Contact{kClosest0, kClosest1, kClosest2, kClosest3, kClosest4}
+	kClosestAll := [][]Contact{kClosest0, kClosest1, kClosest2, kClosest3, kClosest4, kClosest5, kClosest6, kClosest7, kClosest8, kClosest9}
+	//kClosestAll := [][]Contact{kClosest0, kClosest1, kClosest2, kClosest3, kClosest4}
 
 	for i := range onlineNodes {
 		log.Println("\nI am node " + onlineNodes[i].Me.Address + " and these are my KClosest:")
@@ -286,7 +296,6 @@ func Test_2002(t *testing.T) {
 
 		for o := range kClosestAll[i] {
 			if kClosestAll[i][o].ID.String() != kClosestMe[o].ID.String() {
-				log.Println("OKEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEJ")
 				log.Println("Actual: " + kClosestAll[i][o].Address)
 				log.Println("Expected: " + kClosestMe[o].Address)
 				t.Error("error in test case 2002.")
@@ -312,8 +321,7 @@ func Test_2002(t *testing.T) {
 		chosenTargetNode := onlineNodes[randTargetIndex]
 
 		kClosestActual := chosenSourceNode.Kademlia.LookupContact(chosenTargetNode.Me.ID)
-		kClosestExpected := chosenTargetNode.Rt.FindClosestContacts(chosenTargetNode.Me.ID, K)
-
+		kClosestExpected := chosenTargetNode.Kademlia.LookupContact(chosenTargetNode.Me.ID)
 		for j := range kClosestActual {
 			if kClosestActual[j].ID.String() != kClosestExpected[j].ID.String() {
 				log.Println("Target: " + chosenTargetNode.Me.Address + "/" + chosenTargetNode.Me.ID.String())
@@ -333,11 +341,11 @@ func Test_2002(t *testing.T) {
 	server2.network.CloseConnection();
 	server3.network.CloseConnection();
 	server4.network.CloseConnection();
-	/* server5.network.CloseConnection();
+	 server5.network.CloseConnection();
 	server6.network.CloseConnection();
 	server7.network.CloseConnection();
 	server8.network.CloseConnection();
-	server9.network.CloseConnection(); */
+	server9.network.CloseConnection(); 
 
 	time.Sleep(time.Millisecond * 500)
 
@@ -351,7 +359,7 @@ func TestFindNode(t *testing.T) {
 }*/
 
 /* Test case 2003: The sytem should be store a file in the network at the k-closest contacts to the file hash. */
-func Test_2003(t *testing.T) {
+func test_2003(t *testing.T) {
 time.Sleep(time.Millisecond * 500)
 		//random node ID's
 		node1 := NewNode("", ClientAddress)

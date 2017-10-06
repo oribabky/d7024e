@@ -15,7 +15,7 @@ func NewKademlia (rt *RoutingTable, network *Network) Kademlia {
 }
 
 const Alpha int = 2;
-const K int = 5;
+const K int = 20;
 
 
 
@@ -193,18 +193,24 @@ func (kademlia *Kademlia) ValueLookup(toBeQueried []Contact, kClosest []Contact,
 		    	log.Println("timeout!!")
 		    	break;
 
-	        case file := <-kademlia.network.ReturnedFiles:
+	        case filePacket := <-kademlia.network.ReturnedPacketFiles:
 	        	//if the file is returned
-		    	log.Println("File returned: " + file.Key.String())
+		    	log.Println("File returned: " + filePacket.ID + " from node: " + filePacket.SourceNodeID)
 
-		    	//find the closest observed contact that did not return the file:
+		    	//For caching reasons, find the closest observed contact that did not return the file:
 		    	for i := range kClosest {
-
-		    		
-
+		    		if kClosest[i].ID.String() == filePacket.SourceNodeID {
+		    			continue;
+		    		}
+		    		//send a store request to that node.
+		    		fileToBeStored := NewFile(filePacket.ID, filePacket.Data)
+		    		kademlia.network.SendStoreMessage(kClosest[i].Address, &fileToBeStored)
+		    		log.Println("Store request sent to: " + kClosest[i].Address)
+		    		break;
 		    	}
 
-		    	return file.Data;
+		    	//lastly, return the data itself and exit the function.
+		    	return filePacket.Data;
 
 	    	case c := <-kademlia.network.ReturnedContacts:
 
