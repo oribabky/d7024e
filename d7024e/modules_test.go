@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	//"strconv"
+	"time"
 )
 
 
 /* Test case 1001: FindClosestContacts should return k closest nodes ordered in distance to source node. */
 func TestRoutingTable_1001(t *testing.T) {
+	time.Sleep(time.Millisecond * 500)
 	log.Println("testing")
 	node0 := NewNode("", ClientAddress)
 	srcNode := "FFFFFFFF00000000000000000000000000000000";
@@ -35,11 +36,12 @@ func TestRoutingTable_1001(t *testing.T) {
 
 	for i := range kClosest {
 		if kClosest[i].ID.String() != expected[i] {
-			t.Error("error in test case 1001")
+			t.Fatal("error in test case 1001")
 		}
 	}
-
+	time.Sleep(time.Millisecond * 500)
 	node0.network.CloseConnection();
+	time.Sleep(time.Millisecond * 500)
 }
 
 /* Test case 1002: FindClosestContact should return k items even if k is higher than the amount of items available. */
@@ -58,12 +60,14 @@ func TestRoutingTable_1002(t *testing.T) {
 	k := 1000;
 	kClosest := rt.FindClosestContacts(NewKademliaID(node1), k)
     fmt.Println(kClosest[0].Address)
-	expectedSize := 2;
+	expectedSize := 3;
 
 	if len(kClosest) != expectedSize {
-			t.Error("error in test case 1002")
+			t.Fatal("error in test case 1002")
 		}
+	time.Sleep(time.Millisecond * 500)	
 	node0.network.CloseConnection();
+	time.Sleep(time.Millisecond * 500)
 
 }
 
@@ -79,26 +83,25 @@ func TestRoutingTable_1003(t *testing.T) {
 	rt.AddContact(NewContact(NewKademliaID(node2), "localhost:8002"))
 
 	//try adding same ID as node2 again with same port
-	expectedNrNodes := 2;
+	expectedNrNodes := 3;
 	rt.AddContact(NewContact(NewKademliaID(node2), "localhost:8002"))
 	nodes := rt.FindClosestContacts(NewKademliaID(node1), 100)
 
 	if len(nodes) != expectedNrNodes {
-			t.Error("error in test case 1003")
+			t.Fatal("error in test case 1003")
 		}
 
 	//Adding a node with the same ID as another in the routing table but a new port should not change the routing table.
-	expectedNrNodes = 2;
 	newPort := "localhost:8303"
 	rt.AddContact(NewContact(NewKademliaID(node2), newPort))
 	nodes = rt.FindClosestContacts(NewKademliaID(node1), 100)
 
 	if len(nodes) != expectedNrNodes {
-		t.Error("error in test case 1003")
+		t.Fatal("error in test case 1003")
 	}
 
 	if nodes[1].Address == newPort {
-		t.Error("error in test case 1003")
+		t.Fatal("error in test case 1003")
 	}
 	
 	node0.network.CloseConnection();
@@ -198,7 +201,7 @@ func Test_1005(t *testing.T) {
 
 	for i := range expected {
 		if expected[i].ID.String() != contacts[i].ID.String() {
-			t.Error("error in test case 1005")
+			t.Fatal("error in test case 1005")
 		}
 	}
 
@@ -210,7 +213,7 @@ func Test_1005(t *testing.T) {
 
 	for i := range expected {
 		if expected[i].ID.String() != contacts[i].ID.String() {
-			t.Error("error in test case 1005")
+			t.Fatal("error in test case 1005")
 		}
 	}
 
@@ -222,7 +225,7 @@ func Test_1005(t *testing.T) {
 
 	for i := range expected {
 		if expected[i].ID.String() != contacts[i].ID.String() {
-			t.Error("error in test case 1005")
+			t.Fatal("error in test case 1005")
 		}
 	}
 

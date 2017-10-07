@@ -24,14 +24,15 @@ type Network struct {
 type File struct {
 	Key *KademliaID
 	Data []byte
+	pin bool
 }
 
 func NewFile(id string, data []byte) File{
 
 	if id == "" {
-		return File{NewRandomKademliaID(), data}
+		return File{NewRandomKademliaID(), data, false}
 	} 
-	return File{NewKademliaID(id), data}
+	return File{NewKademliaID(id), data, false}
 }
 
 func NewNetwork(contact *Contact) Network {
@@ -69,6 +70,8 @@ func (network *Network) FileExists(fileKey *KademliaID) bool {
 	return false;
 }
 
+
+
 func (network *Network) ReservePacketID(packet *KademliaPacket) int32 {
 	/* This function will append a packet to sentPackets[] and incremenet packetID. 
 	We need to lock the access to packetID. */
@@ -87,7 +90,7 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 
 		currentPacket := <-network.packetQueue
 		log.Println("Node " + network.Contact.Address + " handling: " + currentPacket.Procedure + 
-			" from " + currentPacket.SourceAddress)
+			" from " + currentPacket.SourceAddress + " to " + currentPacket.DestinationAddress)
 
 		switch currentPacket.Procedure {
 
@@ -201,7 +204,7 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			rt.AddContact(NewContact(NewKademliaID(currentPacket.SourceID), currentPacket.SourceAddress))
 
 			//if a file has been returned:
-			if currentPacket.File.ID != "" {
+			if currentPacket.File != nil {
 				log.Println("File retrieved!: " + currentPacket.File.ID)
 				//file := NewFile(currentPacket.File.ID, currentPacket.File.Data)
 				go network.AddToFilePacketChannel(currentPacket.File)
@@ -229,7 +232,7 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			
 			if network.FileExists(file.Key) == false {
 				network.files = append(network.files, &file)
-				log.Println("Stored file: " + file.Key.String() + " data: " + string(file.Data))
+				log.Println("Node " + network.Contact.Address +" stored file: " + file.Key.String() + " data: " + string(file.Data))
 			}
 
 		case StoreSend:
@@ -250,7 +253,7 @@ func (network *Network) Listen() {
 		err = proto.Unmarshal(buf[0:n], kademliaPacket)
 		if addr != nil {
 			go network.AddToPacketChannel(kademliaPacket)
-			log.Printf("Received RPC-request: " + kademliaPacket.Procedure + " from " + kademliaPacket.SourceAddress)
+			log.Printf("Node " + network.Contact.Address + " Received RPC-request: " + kademliaPacket.Procedure + " from " + kademliaPacket.SourceAddress)
 		}
 
 		CheckError(err, "Couldn't listen ")
@@ -278,16 +281,21 @@ func (network *Network) AddToFilePacketChannel(filePacket *FilePacket) {
 func (network *Network) SendKademliaPacket(address string, packet *KademliaPacket) {
 	/* establish a connection to the target server. */
 
-	targetAddr, err := net.ResolveUDPAddr("udp", address)
-	CheckError(err, "targetAddr")
+	if packet.DestinationAddress != packet.SourceAddress {
+		targetAddr, err := net.ResolveUDPAddr("udp", address)
+		CheckError(err, "targetAddr")
 
-	data, err := proto.Marshal(packet)
-	CheckError(err, "Couldn't marshal the message")
+		data, err := proto.Marshal(packet)
+		CheckError(err, "Couldn't marshal the message")
 
-	buf := []byte(data)
+		buf := []byte(data)
 
-	_, err = network.connection.WriteToUDP(buf, targetAddr)
-	CheckError(err, "Couldn't write the message")
+		_, err = network.connection.WriteToUDP(buf, targetAddr)
+		CheckError(err, "Couldn't write the message")	
+	} else {
+		go network.AddToPacketChannel(packet)
+	}
+
 
 }
 
@@ -318,7 +326,7 @@ func (network *Network) AwaitResponse(packetID int32) bool{
 	alive := false;
 
 	start := time.Now()
-	limit := 500 * time.Millisecond	//how long time do we wait for a response?
+	limit := 2000 * time.Millisecond	//how long time do we wait for a response?
 	t := time.Now()
 	elapsed := t.Sub(start)
 
@@ -357,7 +365,7 @@ func (network *Network) SendFindNodeMessage(address string, targetID string) {
 	kademliaPacket, err := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), FindNodeSend)
 	CheckError(err, "find_node failed")
 
-	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
+	//kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
 	kademliaPacket.TargetID = targetID;
 
 	kademliaPacket.DestinationAddress = address;
@@ -370,7 +378,7 @@ func (network *Network) SendFindDataMessage(address string, keyID string) {
 	kademliaPacket, err := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), FindDataSend)
 	CheckError(err, "find_data failed")
 
-	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
+	//kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
 	kademliaPacket.TargetID = keyID;
 
 	kademliaPacket.DestinationAddress = address;
@@ -380,7 +388,7 @@ func (network *Network) SendFindDataMessage(address string, keyID string) {
 func (network *Network) SendStoreMessage(address string, file *File) {
 	kademliaPacket, err := network.CreateKademliaPacket(network.Contact.Address, network.Contact.ID.String(), StoreSend)
 	CheckError(err, "store failed")
-	kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
+	//kademliaPacket.PacketID = network.ReservePacketID(kademliaPacket)
 	kademliaPacket.DestinationAddress = address;
 
 	//file := NewFile("", data)

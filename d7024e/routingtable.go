@@ -18,6 +18,7 @@ func NewRoutingTable(me Contact, network *Network) *RoutingTable {
 	}
 	routingTable.me = me;
 	routingTable.network = network;
+	routingTable.AddContact(me) //test
 	return routingTable
 }
 

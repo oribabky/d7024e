@@ -15,7 +15,7 @@ func NewKademlia (rt *RoutingTable, network *Network) Kademlia {
 }
 
 const Alpha int = 2;
-const K int = 20;
+const K int = 3;
 
 
 
@@ -42,18 +42,6 @@ func (kademlia *Kademlia) LookupContact(targetID *KademliaID) []Contact {
 
 func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, queriedContacts []Contact, targetID *KademliaID) []Contact {
 
-	/*//WHITEBOXTEST
-	log.Println("CurrentKClosest for node " + kademlia.network.Contact.Address +":")
-	PrintContactList(kClosest)
-
-		log.Println("\nnodes to be queried:")
-	PrintContactList(toBeQueried)
-	log.Println("\n")
-	log.Println("\nTOBEQUERIED:")
-	for i := range toBeQueried {
-		log.Println(toBeQueried[i].Address)
-	}*/
-	
 	//base case
 	if len(toBeQueried) == 0 {
 		return kClosest;
@@ -70,7 +58,7 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, 
 	currentKClosest := kClosest
 	for {
 	    select {
-	        case <-time.After(time.Millisecond * 400):
+	        case <-time.After(time.Millisecond * 1300):
 		    	log.Println("timeout!!")
 		    	break;
 
@@ -101,13 +89,6 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, 
 		    	    currentKClosest = InsertContactSortedDistTarget(c, currentKClosest, targetID)
 
 		    	    log.Println("contact " + c.Address + " was added!")
-					lastIndex := len(currentKClosest) - 1;	
-
-		    	    //if at least one contact was not inserted on the last index, means that it was of closer distance than some other
-		    	    //contact in currentKClosest to our target.
-		    	    if currentKClosest[lastIndex].ID.String() != c.ID.String() {
-		    	    }
-
 				}
 				continue;		//go back to the select case.
 			}
@@ -164,20 +145,9 @@ func (kademlia *Kademlia) LookupData(targetKey *KademliaID) []byte {
 
 func (kademlia *Kademlia) ValueLookup(toBeQueried []Contact, kClosest []Contact, queriedContacts []Contact, targetID *KademliaID) []byte {
 
-	/*//WHITEBOXTEST
-	log.Println("CurrentKClosest for node " + kademlia.network.Contact.Address +":")
-	PrintContactList(kClosest)
-
-		log.Println("\nnodes to be queried:")
-	PrintContactList(toBeQueried)
-	log.Println("\n")
-	log.Println("\nTOBEQUERIED:")
-	for i := range toBeQueried {
-		log.Println(toBeQueried[i].Address)
-	}*/
-	
 	//base case, when no contacts are left to query we return an empty result.
 	if len(toBeQueried) == 0 {
+		log.Println("returning nil.-..")
 		return nil;
 	}
 
@@ -186,31 +156,21 @@ func (kademlia *Kademlia) ValueLookup(toBeQueried []Contact, kClosest []Contact,
 		queriedContacts = append(queriedContacts, toBeQueried[i])
 	}
 
+	fileReturned := false;
 	currentKClosest := kClosest
+	var returnedFilePacket *FilePacket;
 	for {
 	    select {
-	        case <-time.After(time.Millisecond * 400):
+	        case <-time.After(time.Millisecond * 2000):
 		    	log.Println("timeout!!")
 		    	break;
 
 	        case filePacket := <-kademlia.network.ReturnedPacketFiles:
 	        	//if the file is returned
 		    	log.Println("File returned: " + filePacket.ID + " from node: " + filePacket.SourceNodeID)
-
-		    	//For caching reasons, find the closest observed contact that did not return the file:
-		    	for i := range kClosest {
-		    		if kClosest[i].ID.String() == filePacket.SourceNodeID {
-		    			continue;
-		    		}
-		    		//send a store request to that node.
-		    		fileToBeStored := NewFile(filePacket.ID, filePacket.Data)
-		    		kademlia.network.SendStoreMessage(kClosest[i].Address, &fileToBeStored)
-		    		log.Println("Store request sent to: " + kClosest[i].Address)
-		    		break;
-		    	}
-
-		    	//lastly, return the data itself and exit the function.
-		    	return filePacket.Data;
+		    	fileReturned = true;
+		    	returnedFilePacket = filePacket;
+		    	continue;
 
 	    	case c := <-kademlia.network.ReturnedContacts:
 
@@ -239,17 +199,27 @@ func (kademlia *Kademlia) ValueLookup(toBeQueried []Contact, kClosest []Contact,
 		    	    currentKClosest = InsertContactSortedDistTarget(c, currentKClosest, targetID)
 
 		    	    log.Println("contact " + c.Address + " was added!")
-					lastIndex := len(currentKClosest) - 1;	
-
-		    	    //if at least one contact was not inserted on the last index, means that it was of closer distance than some other
-		    	    //contact in currentKClosest to our target.
-		    	    if currentKClosest[lastIndex].ID.String() != c.ID.String() {
-		    	    }
-
 				}
 				continue;		//go back to the select case.
 			}
 		break;	//break out of the outer for-loop.
+	}
+
+	if fileReturned == true {
+		//For caching reasons, find the closest observed contact that did not return the file:
+		for i := range kClosest {
+			if kClosest[i].ID.String() == returnedFilePacket.SourceNodeID {
+				continue;
+			}
+			//send a store request to that node.
+			fileToBeStored := NewFile(returnedFilePacket.ID, returnedFilePacket.Data)
+			kademlia.network.SendStoreMessage(kClosest[i].Address, &fileToBeStored)
+			log.Println("Store request sent to: " + kClosest[i].Address)
+			break;
+		}
+
+		//lastly, return the data itself and exit the function.
+		return returnedFilePacket.Data;
 	}
 
 	toBeQueried = ClearContactSlice(toBeQueried)
