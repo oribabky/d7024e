@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"bufio"
 	"os"
+	"strings"
 )
 
 /* This will be a simulation of 100 nodes */
@@ -52,29 +53,28 @@ func main () {
 	
 	for {
 		reader := bufio.NewReader(os.Stdin)
-	    fmt.Print("Choose procedure: ")
+	    fmt.Println("\nChoose what to do in the following way separated by blankspace: ")
+	    fmt.Println("/Choose node: [0-" + strconv.Itoa(nrNodes - 1) + "]/Choose procedure: store, cat, pin, unpin/If store: file contents, Else: 20-bit key")
+	    fmt.Print("Command: ")
 	    text, _ := reader.ReadString('\n')
-	    switch text {
-		    case "store":
-		    case "cat":
-		    case "pin":
-		    case "unpin":
-		    default:
+
+	    words := strings.Fields(text)
+	    if len(words) != 3 {
+	    	fmt.Println("Too few arguments..")
+	    	continue;
 	    }
 
+	    option1, err := strconv.Atoi(words[0])
+	    if err != nil {
+	    	fmt.Println("Bad format of node number..")
+	    	continue;
+	    }
+	    if option1 < 0 || option1 > nrNodes - 1 {
+	    	fmt.Println("Invalid node chosen..")
+	    	continue;
+	    } 
 
-	    
-	    fmt.Println(text[0])
-
-	    fmt.Println("Enter text: ")
-	    text2 := ""
-	    fmt.Scanln(text2)
-	    fmt.Println(text2)
-
-	    ln := ""
-	    fmt.Sscanln("%v", ln)
-	    fmt.Println(ln)	
-		} 
+	} 
 
 }
 
