@@ -167,7 +167,7 @@ func (kademlia *Kademlia) ValueLookup(toBeQueried []Contact, kClosest []Contact,
 	var returnedFilePacket *FilePacket;
 	for {
 	    select {
-	        case <-time.After(time.Millisecond * 2500):
+	        case <-time.After(time.Millisecond * 1000):
 		    	log.Println("timeout!!")
 		    	break;
 

@@ -1,14 +1,14 @@
 package d7024e
 
 import (
-	"testing"
+	/*"testing"
 	"log"
 	"time"
-	"math/rand"
+	"math/rand" */
 )
 
 /* Test case 3001: Simulate a network of 100 peers performing tasks. */
-func test_3001(t *testing.T) {
+/*func test_3001(t *testing.T) {
 
 	//create 100 nodes
 	port := 8000;
@@ -23,5 +23,5 @@ func test_3001(t *testing.T) {
 	}
 
 
-	log.Println("Nodes are up")
-}
+	log.Println("Nodes are up") 
+}*/
