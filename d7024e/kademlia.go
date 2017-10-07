@@ -3,15 +3,17 @@ package d7024e
 import (
 	"log"
 	"time"
+	"sync"
 )
 
 type Kademlia struct {
 	rt *RoutingTable
 	network *Network
+	mux sync.Mutex
 }
 
 func NewKademlia (rt *RoutingTable, network *Network) Kademlia {
-	return Kademlia{rt, network}
+	return Kademlia{rt, network, sync.Mutex{}}
 }
 
 const Alpha int = 2;
@@ -20,6 +22,8 @@ const K int = 3;
 
 
 func (kademlia *Kademlia) LookupContact(targetID *KademliaID) []Contact {
+	//we have to mutex lock this procedure as this might be called from republish.
+	kademlia.mux.Lock()
 
 	//selected the alpha closest from our own routing table to the target
 	myKClosest := kademlia.rt.FindClosestContacts(targetID, K)
@@ -37,6 +41,8 @@ func (kademlia *Kademlia) LookupContact(targetID *KademliaID) []Contact {
 	queriedContacts := make([]Contact, 0)
 
 	kClosest = kademlia.NodeLookup(toBeQueried, kClosest, queriedContacts, targetID)
+
+	defer kademlia.mux.Unlock()		//release the mutex lock after the result is returned.
 	return kClosest;
 }
 
@@ -58,7 +64,7 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, 
 	currentKClosest := kClosest
 	for {
 	    select {
-	        case <-time.After(time.Millisecond * 1300):
+	        case <-time.After(time.Millisecond * 500):
 		    	log.Println("timeout!!")
 		    	break;
 
@@ -161,7 +167,7 @@ func (kademlia *Kademlia) ValueLookup(toBeQueried []Contact, kClosest []Contact,
 	var returnedFilePacket *FilePacket;
 	for {
 	    select {
-	        case <-time.After(time.Millisecond * 2000):
+	        case <-time.After(time.Millisecond * 2500):
 		    	log.Println("timeout!!")
 		    	break;
 
@@ -213,7 +219,7 @@ func (kademlia *Kademlia) ValueLookup(toBeQueried []Contact, kClosest []Contact,
 			}
 			//send a store request to that node.
 			fileToBeStored := NewFile(returnedFilePacket.ID, returnedFilePacket.Data)
-			kademlia.network.SendStoreMessage(kClosest[i].Address, &fileToBeStored)
+			defer kademlia.network.SendStoreMessage(kClosest[i].Address, &fileToBeStored)
 			log.Println("Store request sent to: " + kClosest[i].Address)
 			break;
 		}
@@ -254,7 +260,7 @@ func (kademlia *Kademlia) ValueLookup(toBeQueried []Contact, kClosest []Contact,
 func (kademlia *Kademlia) Store(data []byte) *KademliaID{
 	fileToBeAdded := NewFile("", data)
 
-	//find the closest contacts to this dummy-target contact
+	//find the closest contacts
 	kClosest := kademlia.LookupContact(fileToBeAdded.Key)
 	PrintContactList(kClosest)
 	//send them store RPCs
@@ -262,7 +268,31 @@ func (kademlia *Kademlia) Store(data []byte) *KademliaID{
 		kademlia.network.SendStoreMessage(kClosest[i].Address, &fileToBeAdded)
 	}
 
+	//the original publisher will re-publish this file periodically.
+	go kademlia.RePublish(data, fileToBeAdded.Key)
+
 	return fileToBeAdded.Key;
+}
+
+func (kademlia *Kademlia) RePublish(data []byte, fileKey *KademliaID) {
+    fileToRePublished := NewFile(fileKey.String(), data)
+
+    republishTimer := time.Second * 60
+    tickChan := time.NewTicker(republishTimer).C
+
+    for {
+    	select {
+    		case <- tickChan:
+    			log.Println("Re-publishing: " + fileKey.String() + "...")
+			    //find the closest contacts
+				kClosest := kademlia.LookupContact(fileToRePublished.Key)
+				PrintContactList(kClosest)
+				//send them store RPCs
+				for i := range kClosest {
+					kademlia.network.SendStoreMessage(kClosest[i].Address, &fileToRePublished)
+				}
+    	}
+    }
 }
 
 func ContainsContact(contacts []Contact, contact *Contact) bool {
@@ -299,10 +329,5 @@ func InsertContactSortedDistTarget(contact *Contact, list []Contact, target *Kad
 }
 
 func ClearContactSlice(list []Contact) []Contact {
-/*	for len(list) >= 1 {
-		list = list[1:]
-	} 
-	return list; */
 	return list[:0]
-	
 }

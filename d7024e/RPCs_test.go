@@ -33,10 +33,6 @@ func Test_2001(t *testing.T) {
 	if node1.network.SendPingMessage(ServerAddress3) == false {
 		t.Fatal("error in testing RPCs.")
 	}
-/*	if node1.network.SendPingMessage(OfflineServer) == true {
-		t.Fatal("error in testing RPCs.")
-	}*/
-
 
 
 	//TEST FIND_NODE, should be able to be sent asynchronously.

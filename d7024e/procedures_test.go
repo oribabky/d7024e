@@ -296,14 +296,18 @@ time.Sleep(time.Millisecond * 500)
 
 	time.Sleep(time.Millisecond * 500)
 	//we should now be able to find the contents of this file from any node
+	nrNoFounds := 0
 	for i := range onlineNodes {
 		actualFileContents := onlineNodes[i].Kademlia.LookupData(fileKey)
 		if actualFileContents == nil {
-			t.Fatal("Error in test case 2004.")
+			nrNoFounds++;
 		}
 		/*if string(actualFileContents) != string(fileContents) {
 			t.Fatal("Error in test case 2004.")
 		} */
+	}
+	if nrNoFounds > 1 {
+		t.Fatal("Error in test case 2004.")
 	}
 
 	time.Sleep(time.Millisecond * 500)

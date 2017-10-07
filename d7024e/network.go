@@ -24,7 +24,7 @@ type Network struct {
 type File struct {
 	Key *KademliaID
 	Data []byte
-	pin bool
+	pinned bool
 }
 
 func NewFile(id string, data []byte) File{
@@ -70,7 +70,27 @@ func (network *Network) FileExists(fileKey *KademliaID) bool {
 	return false;
 }
 
+func (network *Network) Pin(fileKey string) {
+	for i := range network.files {
+		if network.files[i].Key.String() == fileKey {
+			network.files[i].pinned = true;
+			log.Println("Pinned file " + fileKey)
+			return;
+		}
+	}
+	log.Println("Could not pin file " + fileKey)
+}
 
+func (network *Network) UnPin(fileKey string) {
+	for i := range network.files {
+		if network.files[i].Key.String() == fileKey {
+			network.files[i].pinned = false;
+			log.Println("Unpinned file " + fileKey)
+			return;
+		}
+	}
+	log.Println("Could not unpin file " + fileKey)
+}
 
 func (network *Network) ReservePacketID(packet *KademliaPacket) int32 {
 	/* This function will append a packet to sentPackets[] and incremenet packetID. 
