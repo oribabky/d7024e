@@ -60,8 +60,8 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, 
 	}
 
 	toBeQueried = ClearContactSlice(toBeQueried)
-
 	currentKClosest := kClosest
+	roundSuccessful := false
 	for {
 	    select {
 	        case <-time.After(time.Millisecond * 500):
@@ -81,7 +81,7 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, 
 		    	    
 		    	    //if at least one contact was not inserted on the last index, means that it was of closer distance than some other contact in currentKClosest to our target.
 		    	    if currentKClosest[K].ID.String() != c.ID.String() {
-		    	    	//roundSuccessful = true;
+		    	    	roundSuccessful = true;
 		    	    	log.Println("contact " + c.Address + " was added!")
 		    	    }
 
@@ -93,7 +93,7 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, 
 					
 		    	    //add the contact to k-closest
 		    	    currentKClosest = InsertContactSortedDistTarget(c, currentKClosest, targetID)
-
+		    	    roundSuccessful = true;
 		    	    log.Println("contact " + c.Address + " was added!")
 				}
 				continue;		//go back to the select case.
@@ -101,7 +101,11 @@ func (kademlia *Kademlia) NodeLookup(toBeQueried []Contact, kClosest []Contact, 
 		break;	//break out of the outer for-loop.
 	}
 
+
 	limit := Alpha
+	if roundSuccessful == false {
+		limit = K
+	}
 
 	contactsToQuery := 0
 	for i := range currentKClosest {
@@ -165,9 +169,10 @@ func (kademlia *Kademlia) ValueLookup(toBeQueried []Contact, kClosest []Contact,
 	fileReturned := false;
 	currentKClosest := kClosest
 	var returnedFilePacket *FilePacket;
+	roundSuccessful := false;
 	for {
 	    select {
-	        case <-time.After(time.Millisecond * 1000):
+	        case <-time.After(time.Millisecond * 2000):
 		    	log.Println("timeout!!")
 		    	break;
 
@@ -191,7 +196,7 @@ func (kademlia *Kademlia) ValueLookup(toBeQueried []Contact, kClosest []Contact,
 		    	    
 		    	    //if at least one contact was not inserted on the last index, means that it was of closer distance than some other contact in currentKClosest to our target.
 		    	    if currentKClosest[K].ID.String() != c.ID.String() {
-		    	    	//roundSuccessful = true;
+		    	    	roundSuccessful = true;
 		    	    	log.Println("contact " + c.Address + " was added!")
 		    	    }
 
@@ -203,7 +208,7 @@ func (kademlia *Kademlia) ValueLookup(toBeQueried []Contact, kClosest []Contact,
 					
 		    	    //add the contact to k-closest
 		    	    currentKClosest = InsertContactSortedDistTarget(c, currentKClosest, targetID)
-
+		    	    roundSuccessful = true;
 		    	    log.Println("contact " + c.Address + " was added!")
 				}
 				continue;		//go back to the select case.
@@ -231,6 +236,9 @@ func (kademlia *Kademlia) ValueLookup(toBeQueried []Contact, kClosest []Contact,
 	toBeQueried = ClearContactSlice(toBeQueried)
 
 	limit := Alpha
+	if roundSuccessful == false {
+		limit = K
+	}
 
 	contactsToQuery := 0
 	for i := range currentKClosest {
