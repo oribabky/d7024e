@@ -70,26 +70,38 @@ func (network *Network) FileExists(fileKey *KademliaID) bool {
 	return false;
 }
 
-func (network *Network) Pin(fileKey string) {
+func (network *Network) Pin(fileKey *KademliaID) {
 	for i := range network.files {
-		if network.files[i].Key.String() == fileKey {
-			network.files[i].pinned = true;
-			log.Println("Pinned file " + fileKey)
+		if network.files[i].Key.String() == fileKey.String() {
+
+			if network.files[i].pinned == true {
+				log.Println("File was already pinned.")
+			} else {
+				network.files[i].pinned = true;
+				log.Println("Pinned file " + fileKey.String())
+			}
+
 			return;
 		}
 	}
-	log.Println("Could not pin file " + fileKey)
+	log.Println("Could not pin file " + fileKey.String())
 }
 
-func (network *Network) UnPin(fileKey string) {
+func (network *Network) UnPin(fileKey *KademliaID) {
 	for i := range network.files {
-		if network.files[i].Key.String() == fileKey {
-			network.files[i].pinned = false;
-			log.Println("Unpinned file " + fileKey)
+		if network.files[i].Key.String() == fileKey.String() {
+
+			if network.files[i].pinned == false {
+				log.Println("File was already unpinned.")
+			} else {
+				network.files[i].pinned = false;
+				log.Println("Unpinned file " + fileKey.String())
+			}
+
 			return;
 		}
 	}
-	log.Println("Could not unpin file " + fileKey)
+	log.Println("Could not unpin file " + fileKey.String())
 }
 
 func (network *Network) ReservePacketID(packet *KademliaPacket) int32 {
@@ -253,6 +265,8 @@ func (network *Network) RequestHandler(rt *RoutingTable) {
 			if network.FileExists(file.Key) == false {
 				network.files = append(network.files, &file)
 				log.Println("Node " + network.Contact.Address +" stored file: " + file.Key.String() + " data: " + string(file.Data))
+			} else {
+				log.Println("File already stored..")
 			}
 
 		case StoreSend:

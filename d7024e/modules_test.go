@@ -40,7 +40,7 @@ func TestRoutingTable_1001(t *testing.T) {
 		}
 	}
 	time.Sleep(time.Millisecond * 500)
-	node0.network.CloseConnection();
+	node0.Network.CloseConnection();
 	time.Sleep(time.Millisecond * 500)
 }
 
@@ -66,7 +66,7 @@ func TestRoutingTable_1002(t *testing.T) {
 			t.Fatal("error in test case 1002")
 		}
 	time.Sleep(time.Millisecond * 500)	
-	node0.network.CloseConnection();
+	node0.Network.CloseConnection();
 	time.Sleep(time.Millisecond * 500)
 
 }
@@ -104,7 +104,7 @@ func TestRoutingTable_1003(t *testing.T) {
 		t.Fatal("error in test case 1003")
 	}
 	
-	node0.network.CloseConnection();
+	node0.Network.CloseConnection();
 }
 
 /* Test case 1004: When adding a contact to the routing table bucket that is full, the system should ping the least
@@ -161,15 +161,15 @@ func testRoutingTable_1004(t *testing.T) {
 		log.Println(e.Value.(Contact).ID.String())
 	} */
 
-	node1.network.CloseConnection();
-	node2.network.CloseConnection();
-	node3.network.CloseConnection();
-	node4.network.CloseConnection();
-	node5.network.CloseConnection();
-	node6.network.CloseConnection();
-	node7.network.CloseConnection();
-	node8.network.CloseConnection();
-	node9.network.CloseConnection();
+	node1.Network.CloseConnection();
+	node2.Network.CloseConnection();
+	node3.Network.CloseConnection();
+	node4.Network.CloseConnection();
+	node5.Network.CloseConnection();
+	node6.Network.CloseConnection();
+	node7.Network.CloseConnection();
+	node8.Network.CloseConnection();
+	node9.Network.CloseConnection();
 
 
 }

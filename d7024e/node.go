@@ -8,7 +8,7 @@ type Node struct {
 	Me *Contact
 	Rt *RoutingTable
 	Kademlia *Kademlia
-	network *Network
+	Network *Network
 }
 
 func NewNode (nodeID string, address string) *Node{
@@ -28,6 +28,6 @@ func NewNode (nodeID string, address string) *Node{
 
 func (node *Node) NodeUp () {
 	log.Println("Hello I am node " + node.Me.ID.String() + " I am on address: " + node.Me.Address)
-	go node.network.Listen()
-	node.network.RequestHandler(node.Rt)
+	go node.Network.Listen()
+	node.Network.RequestHandler(node.Rt)
 }

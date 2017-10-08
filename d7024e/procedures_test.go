@@ -135,11 +135,11 @@ func Test_2002(t *testing.T) {
 
 	time.Sleep(time.Millisecond * 500)
 
-	node1.network.CloseConnection();
-	server1.network.CloseConnection();
-	server2.network.CloseConnection();
-	server3.network.CloseConnection();
-	server4.network.CloseConnection();
+	node1.Network.CloseConnection();
+	server1.Network.CloseConnection();
+	server2.Network.CloseConnection();
+	server3.Network.CloseConnection();
+	server4.Network.CloseConnection();
 
 	time.Sleep(time.Millisecond * 500)
 
@@ -149,14 +149,17 @@ func TestFindNode(t *testing.T) {
 
 	node1 := NewNode("", ClientAddress)
 	go node1.NodeUp()
-	go node1.network.SendFindNodeMessage(ServerAddress)
+	go node1.Network.SendFindNodeMessage(ServerAddress)
 }*/
 
-/* Test case 2003: The sytem should be store a file in the network at the k-closest contacts to the file hash. */
+/* Test case 2003: The sytem should be store a file in the Network at the k-closest contacts to the file hash. */
 func Test_2003(t *testing.T) {
 time.Sleep(time.Millisecond * 500)
-		//random node ID's
-		node1 := NewNode("", ClientAddress)
+	//test STORE
+	log.Println("\nSTORE")
+
+	//random node ID's
+	node1 := NewNode("", ClientAddress)
 	server1 := NewNode("", ServerAddress1)
 	server2 := NewNode("", ServerAddress2)
 	server3 := NewNode("", ServerAddress3)
@@ -168,6 +171,8 @@ time.Sleep(time.Millisecond * 500)
 	go server2.NodeUp()
 	go server3.NodeUp()
 	go server4.NodeUp()
+
+	
 
 	//Fill up the routing tables
 	onlineNodes := []*Node{node1, server1, server2, server3, server4}
@@ -188,13 +193,6 @@ time.Sleep(time.Millisecond * 500)
 	server4.Kademlia.LookupContact(server4.Me.ID)
 
 
-
-	//our dummy node will have the same ID as the file-key ID 
-	/*dummyNode := NewNode(fileKey.String(), ServerAddress5)
-	go dummyNode.NodeUp()
-	dummyNode.Rt.AddContact(*node1.Me)
-	onlineNodes = append(onlineNodes, dummyNode) */
-
 			//store the file in the system
 	fileContents := []byte("asdasdasdasdasd")
 	fileKey := node1.Kademlia.Store(fileContents) 
@@ -214,20 +212,9 @@ time.Sleep(time.Millisecond * 500)
 
 	nrStoredLocationsActual := 0
 	actualString := "";
-	/*for i := range kClosestExpected {
-		for o := range onlineNodes {
 
-			if kClosestExpected[i].ID.String() == onlineNodes[o].Me.ID.String() {
-				//see that the file is actually stored.
-				if onlineNodes[o].network.FileExists(fileKey) == true {
-					nrStoredLocationsActual ++;
-					actualString += onlineNodes[o].Me.Address + "/"
-				}
-			}
-		}
-	} */
 	for i := range onlineNodes {
-		if onlineNodes[i].network.FileExists(fileKey) == true {
+		if onlineNodes[i].Network.FileExists(fileKey) == true {
 			nrStoredLocationsActual ++;
 			actualString += onlineNodes[i].Me.Address + "/"
 		}		
@@ -244,20 +231,22 @@ time.Sleep(time.Millisecond * 500)
 
 	time.Sleep(time.Millisecond * 500)
 	//close the connections
-	node1.network.CloseConnection();
-	server1.network.CloseConnection();
-	server2.network.CloseConnection();
-	server3.network.CloseConnection();
-	server4.network.CloseConnection();
-	//dummyNode.network.CloseConnection();
+	node1.Network.CloseConnection();
+	server1.Network.CloseConnection();
+	server2.Network.CloseConnection();
+	server3.Network.CloseConnection();
+	server4.Network.CloseConnection();
+	//dummyNode.Network.CloseConnection();
 	time.Sleep(time.Millisecond * 500)
 }
 /*
-/* The system should be able to locate a file in the network */
+/* The system should be able to locate a file in the Network */
 func Test_2004(t *testing.T) {
 time.Sleep(time.Millisecond * 500)
-	//random node ID's
+	//test STORE
+	log.Println("\nCAT")
 
+	//random node ID's
 	node1 := NewNode("", ClientAddress)
 	server1 := NewNode("", ServerAddress1)
 	server2 := NewNode("", ServerAddress2)
@@ -306,16 +295,17 @@ time.Sleep(time.Millisecond * 500)
 			t.Fatal("Error in test case 2004.")
 		} */
 	}
-	if nrNoFounds > 1 {
+	if nrNoFounds > 0 {
 		t.Fatal("Error in test case 2004.")
 	}
+	log.Println(nrNoFounds)
 
 	time.Sleep(time.Millisecond * 500)
 	//close the connections
-	node1.network.CloseConnection();
-	server1.network.CloseConnection();
-	server2.network.CloseConnection();
-	server3.network.CloseConnection();
-	server4.network.CloseConnection();
+	node1.Network.CloseConnection();
+	server1.Network.CloseConnection();
+	server2.Network.CloseConnection();
+	server3.Network.CloseConnection();
+	server4.Network.CloseConnection();
 	time.Sleep(time.Millisecond * 500)
 }

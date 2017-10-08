@@ -9,11 +9,12 @@ import (
 	"bufio"
 	"os"
 	"strings"
+	"time"
 )
 
 /* This will be a simulation of 100 nodes */
 func main () {
-	nrNodes := 1;
+	nrNodes := 100;
 
 	//create 100 nodes
 	port := 8000;
@@ -44,17 +45,11 @@ func main () {
 	for i := range nodes {
 		nodes[i].Rt.PrintRoutingTable()
 	}
-	/*scanner := bufio.NewScanner(os.Stdin)
-	fmt.Print("Choose procedure: ")
-	for scanner.Scan() {
-
-    	fmt.Println(scanner.Text())
-	}*/
 	
 	for {
 		reader := bufio.NewReader(os.Stdin)
 	    fmt.Println("\nChoose what to do in the following way separated by blankspace: ")
-	    fmt.Println("/Choose node: [0-" + strconv.Itoa(nrNodes - 1) + "]/Choose procedure: store, cat, pin, unpin/If store: file contents, Else: 20-bit key")
+	    fmt.Println("/Choose node: [0-" + strconv.Itoa(nrNodes - 1) + "]/Choose procedure: store, cat, pin, unpin/If store: file contents, Else: 40 char key")
 	    fmt.Print("Command: ")
 	    text, _ := reader.ReadString('\n')
 
@@ -74,6 +69,66 @@ func main () {
 	    	continue;
 	    } 
 
+	    option2 := words[1]
+	    if option2 != "store" && option2 != "cat" && option2 != "pin" && option2 != "unpin" {
+	    	fmt.Println(option2)
+	    	fmt.Println("Bad procedure choice..")
+	    	continue;
+	    }
+
+	    option3 := words[2]
+	    allowedChars := "0123456789abcdef"
+	    switch option2 {
+	    case "store":
+	    	fileContents := []byte(option3)
+	    	ID := nodes[option1].Kademlia.Store(fileContents)
+	    	time.Sleep(time.Millisecond * 500)
+	    	fmt.Println(ID.String())
+	    	continue;
+
+    	default:
+    		if len(option3) != 40 {
+    			fmt.Println("Must be 40 chars")    		
+    			continue;
+    		}
+
+    		for i := range option3 {
+    			characterFound := false
+    			for o := range allowedChars {
+    				if option3[i] == allowedChars[o] {
+    					characterFound = true;
+    					break;
+    				}
+    			}
+    			if characterFound == false {
+    				fmt.Println("Non-allowed characters.")
+    			}
+    		}
+
+	    }
+
+
+	    kademliaID := d.NewKademliaID(option3)
+
+	    switch option2 {
+	    case "cat":
+	    	data := nodes[option1].Kademlia.LookupData(kademliaID)
+	    	time.Sleep(time.Millisecond * 500)
+	    	fmt.Println("File contents: "string(data))
+
+	    case "pin":
+	    	nodes[option1].Network.Pin(kademliaID)
+	    	time.Sleep(time.Millisecond * 500)
+    	
+    	case "unpin":
+    		nodes[option1].Network.UnPin(kademliaID)
+    		time.Sleep(time.Millisecond * 500)
+	    }
+
+	
+
+
+	
 	} 
 
 }

@@ -24,13 +24,13 @@ func Test_2001(t *testing.T) {
 	//TEST PING
 	log.Println("\nPING")
 
-	if node1.network.SendPingMessage(ServerAddress1) == false {
+	if node1.Network.SendPingMessage(ServerAddress1) == false {
 		t.Fatal("error in testing RPCs.")
 	}
-	if node1.network.SendPingMessage(ServerAddress2) == false {
+	if node1.Network.SendPingMessage(ServerAddress2) == false {
 		t.Fatal("error in testing RPCs.")
 	}
-	if node1.network.SendPingMessage(ServerAddress3) == false {
+	if node1.Network.SendPingMessage(ServerAddress3) == false {
 		t.Fatal("error in testing RPCs.")
 	}
 
@@ -52,12 +52,12 @@ func Test_2001(t *testing.T) {
 
 
 	//send out the find_node rpcs asynchronously
-	go node1.network.SendFindNodeMessage(ServerAddress1, target.ID.String())
-	go node1.network.SendFindNodeMessage(ServerAddress2, target.ID.String())
-	go node1.network.SendFindNodeMessage(ServerAddress3, target.ID.String())
-	go node1.network.SendFindNodeMessage(ServerAddress1, target.ID.String())
-	go node1.network.SendFindNodeMessage(ServerAddress2, target.ID.String())
-	go node1.network.SendFindNodeMessage(ServerAddress3, target.ID.String())
+	go node1.Network.SendFindNodeMessage(ServerAddress1, target.ID.String())
+	go node1.Network.SendFindNodeMessage(ServerAddress2, target.ID.String())
+	go node1.Network.SendFindNodeMessage(ServerAddress3, target.ID.String())
+	go node1.Network.SendFindNodeMessage(ServerAddress1, target.ID.String())
+	go node1.Network.SendFindNodeMessage(ServerAddress2, target.ID.String())
+	go node1.Network.SendFindNodeMessage(ServerAddress3, target.ID.String())
 	
 	//fetch the actual returned contacts
 	kClosestTotalActual := make([]Contact, 0)
@@ -68,7 +68,7 @@ func Test_2001(t *testing.T) {
 		    	log.Println("Channel empty.")
 		    	break;
 
-	    	case c := <-node1.network.ReturnedContacts:
+	    	case c := <-node1.Network.ReturnedContacts:
 	    		kClosestTotalActual = append(kClosestTotalActual, *c)
 	    		continue;
 	    	}
@@ -113,13 +113,13 @@ func Test_2001(t *testing.T) {
 
 	fileContents := []byte("asdasdasdasdasd")
 	file := NewFile("", fileContents)
-	node1.network.SendStoreMessage(ServerAddress1, &file)
-	node1.network.SendStoreMessage(ServerAddress2, &file)
-	node1.network.SendStoreMessage(ServerAddress3, &file)
+	node1.Network.SendStoreMessage(ServerAddress1, &file)
+	node1.Network.SendStoreMessage(ServerAddress2, &file)
+	node1.Network.SendStoreMessage(ServerAddress3, &file)
 
 	time.Sleep(time.Millisecond * 500)
 
-	if server1.network.FileExists(file.Key) == false || server2.network.FileExists(file.Key) == false || server3.network.FileExists(file.Key) == false {
+	if server1.Network.FileExists(file.Key) == false || server2.Network.FileExists(file.Key) == false || server3.Network.FileExists(file.Key) == false {
 		log.Println("file " + file.Key.String() + " does not exist in one of the servers")
 		t.Fatal("error in testing RPCs.")
 	} 
@@ -129,9 +129,9 @@ func Test_2001(t *testing.T) {
 
 	//TEST FIND_VALUE
 	log.Println("\nFIND_VALUE")
-	go node1.network.SendFindDataMessage(ServerAddress1, file.Key.String())
-	go node1.network.SendFindDataMessage(ServerAddress2, file.Key.String())
-	go node1.network.SendFindDataMessage(ServerAddress3, file.Key.String())
+	go node1.Network.SendFindDataMessage(ServerAddress1, file.Key.String())
+	go node1.Network.SendFindDataMessage(ServerAddress2, file.Key.String())
+	go node1.Network.SendFindDataMessage(ServerAddress3, file.Key.String())
 
 
 	returnedFileID := "";
@@ -142,7 +142,7 @@ func Test_2001(t *testing.T) {
 		    	log.Println("Channel empty.")
 		    	break;
 
-	    	case filePacket := <-node1.network.ReturnedPacketFiles:
+	    	case filePacket := <-node1.Network.ReturnedPacketFiles:
 	    		log.Println("extracting file: " + filePacket.ID)
 	    		log.Println("contents: " + string(file.Data)	)
 	    		returnedFileID = filePacket.ID;
@@ -158,9 +158,9 @@ func Test_2001(t *testing.T) {
 
 
 	time.Sleep(time.Millisecond * 500)
-	node1.network.CloseConnection();
-	server1.network.CloseConnection();
-	server2.network.CloseConnection();
-	server3.network.CloseConnection(); 
+	node1.Network.CloseConnection();
+	server1.Network.CloseConnection();
+	server2.Network.CloseConnection();
+	server3.Network.CloseConnection(); 
 	time.Sleep(time.Millisecond * 500)
 } 
