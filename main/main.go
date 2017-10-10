@@ -114,7 +114,7 @@ func main () {
 	    case "cat":
 	    	data := nodes[option1].Kademlia.LookupData(kademliaID)
 	    	time.Sleep(time.Millisecond * 500)
-	    	fmt.Println("File contents: "string(data))
+	    	fmt.Println("File contents: " + string(data))
 
 	    case "pin":
 	    	nodes[option1].Network.Pin(kademliaID)
