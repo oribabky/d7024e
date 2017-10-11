@@ -42,9 +42,9 @@ func main () {
 	}
 	log.Println("Nodes are up")
 
-	for i := range nodes {
+	/*for i := range nodes {
 		nodes[i].Rt.PrintRoutingTable()
-	}
+	}*/
 	
 	for {
 		reader := bufio.NewReader(os.Stdin)

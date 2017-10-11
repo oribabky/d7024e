@@ -7,7 +7,7 @@ import (
 	//"fmt"
 )
 
-/* Test case 2001: The system should be able to send various RPCs.*/
+/* Test case 2001: The system should be able to send PING, FIND_NODE, FIND_DATA and STORE RPCs.*/
 func Test_2001(t *testing.T) {
 	time.Sleep(time.Millisecond * 500)
 	log.Println("TEST RPCS..")

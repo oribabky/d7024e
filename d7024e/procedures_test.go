@@ -240,7 +240,7 @@ time.Sleep(time.Millisecond * 500)
 	time.Sleep(time.Millisecond * 500)
 }
 /*
-/* The system should be able to locate a file in the Network */
+/* Test case 2004: The system should be able to locate a file in the Network */
 func Test_2004(t *testing.T) {
 time.Sleep(time.Millisecond * 500)
 	//test STORE
